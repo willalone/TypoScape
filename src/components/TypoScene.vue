@@ -13,14 +13,15 @@ onMounted(() => {
   store.setSceneReady(false);
   store.setLoadProgress(0);
 
-  controller = new TypoSceneController(canvasRef.value, {
+  controller = TypoSceneController.create(canvasRef.value, {
     onHoverChange: (char) => store.setHoveredLetter(char),
     onLetterClick: () => undefined,
     onLoadProgress: (progress) => store.setLoadProgress(progress),
     onLoadComplete: () => store.setSceneReady(true),
+    onWebGLFailed: () => store.setWebglSupported(false),
   });
 
-  controller.setAutoRotate(store.autoRotate);
+  controller?.setAutoRotate(store.autoRotate);
 });
 
 watch(

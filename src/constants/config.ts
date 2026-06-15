@@ -1,33 +1,32 @@
 export const WORD = 'TYPO' as const;
 
 export const SCENE_CONFIG = {
-  letterSize: 1.35,
-  letterSpacing: 0.18,
-  hoverScale: 1.12,
-  cameraFov: 42,
-  cameraZ: 11.5,
-  autoRotateSpeed: 0.22,
-  particleCount: 900,
-  bloomStrength: 0.52,
-  bloomRadius: 0.38,
-  bloomThreshold: 0.78,
+  letterSize: 1.2,
+  letterDepth: 0.45,
+  letterSpacing: 1.55,
+  hoverScale: 1.18,
+  cameraFov: 45,
+  cameraZ: 14,
+  autoRotateSpeed: 0.35,
+  particleCount: 1100,
+  bloomStrength: 0.48,
+  bloomRadius: 0.42,
+  bloomThreshold: 0.72,
 } as const;
 
 export const COLORS = {
-  background: 0x05070d,
-  backgroundAccent: 0x12182a,
-  letterFill: 0xf0ebe3,
-  letterOutline: 0x2a3040,
-  letterShadow: 0x1a1420,
-  hoverFill: 0xff6b45,
-  hoverOutline: 0xffb89a,
+  background: 0x0a0c10,
+  backgroundAccent: 0x1a1420,
+  letterBase: 0xf2e8dc,
+  letterEmissive: 0x1a1510,
+  hoverEmissive: 0xff5c3a,
   accent: 0xe8a87c,
-  grid: 0x1a2030,
-  ambient: 0x3a4560,
-  directional: 0xfff0e0,
-  pointWarm: 0xff7a50,
-  pointCool: 0x6088ff,
+  grid: 0x2a3040,
+  ambient: 0x505870,
+  directional: 0xfff4e8,
+  pointWarm: 0xff8a5c,
+  pointCool: 0x7ca8ff,
+  ring: 0xe8a87c,
 } as const;
 
-/** Inter 700 — путь через BASE_URL для корректной работы на GitHub Pages */
-export const FONT_URL = `${import.meta.env.BASE_URL}fonts/inter-700.woff`;
+export const FONT_PATH = `${import.meta.env.BASE_URL}fonts/helvetiker_bold.typeface.json`;

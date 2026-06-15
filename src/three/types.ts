@@ -1,8 +1,7 @@
-import type { Euler, Object3D, Vector3 } from 'three';
-import type { Text } from 'troika-three-text';
+import type { Euler, Mesh, Vector3 } from 'three';
 
 export interface LetterObject {
-  text: Text;
+  mesh: Mesh;
   char: string;
   basePosition: Vector3;
   baseRotation: Euler;
@@ -15,8 +14,9 @@ export interface SceneCallbacks {
   onLetterClick: (char: string) => void;
   onLoadProgress: (progress: number) => void;
   onLoadComplete: () => void;
+  onWebGLFailed: () => void;
 }
 
-export function getLetterTargets(letters: LetterObject[]): Object3D[] {
-  return letters.map((letter) => letter.text);
+export function getLetterMeshes(letters: LetterObject[]): Mesh[] {
+  return letters.map((letter) => letter.mesh);
 }

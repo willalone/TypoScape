@@ -13,18 +13,38 @@ import {
   ACESFilmicToneMapping,
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { COLORS, SCENE_CONFIG } from '../constants/config';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import type { Font } from 'three/examples/jsm/loaders/FontLoader.js';
+import { COLORS, FONT_PATH, SCENE_CONFIG } from '../constants/config';
 import {
   animateCameraReset,
   animateLetterClick,
   animateLetterHover,
 } from './animations';
-import { createGradientSky } from './createEnvironment';
+import { createEnvironment } from './createEnvironment';
 import { createLetters, disposeLetters } from './createLetters';
 import { createParticleField } from './createParticles';
 import { createPostProcessing } from './createPostProcessing';
 import type { LetterObject, SceneCallbacks } from './types';
-import { getLetterTargets } from './types';
+import { getLetterMeshes } from './types';
+
+function tryCreateRenderer(canvas: HTMLCanvasElement): WebGLRenderer | null {
+  try {
+    const renderer = new WebGLRenderer({
+      canvas,
+      antialias: true,
+      alpha: false,
+      powerPreference: 'high-performance',
+    });
+    if (!renderer.getContext()) {
+      renderer.dispose();
+      return null;
+    }
+    return renderer;
+  } catch {
+    return null;
+  }
+}
 
 export class TypoSceneController {
   private readonly scene: Scene;
@@ -41,7 +61,7 @@ export class TypoSceneController {
 
   private letters: LetterObject[] = [];
 
-  private letterTargets: ReturnType<typeof getLetterTargets> = [];
+  private letterMeshes: ReturnType<typeof getLetterMeshes> = [];
 
   private hoveredLetter: LetterObject | null = null;
 
@@ -59,20 +79,36 @@ export class TypoSceneController {
 
   private readonly postProcessing: ReturnType<typeof createPostProcessing>;
 
+  private readonly environment: ReturnType<typeof createEnvironment>;
+
   private clock = 0;
 
-  private readonly initialCameraPosition = { x: 0, y: 0.6, z: SCENE_CONFIG.cameraZ };
+  private readonly initialCameraPosition = { x: 0, y: 1.2, z: SCENE_CONFIG.cameraZ };
 
   private readonly initialTarget = { x: 0, y: 0, z: 0 };
 
-  constructor(
+  static create(
     canvas: HTMLCanvasElement,
     callbacks: SceneCallbacks,
+  ): TypoSceneController | null {
+    const renderer = tryCreateRenderer(canvas);
+    if (!renderer) {
+      callbacks.onWebGLFailed();
+      return null;
+    }
+    return new TypoSceneController(canvas, callbacks, renderer);
+  }
+
+  private constructor(
+    canvas: HTMLCanvasElement,
+    callbacks: SceneCallbacks,
+    renderer: WebGLRenderer,
   ) {
     this.canvas = canvas;
     this.callbacks = callbacks;
+    this.renderer = renderer;
     this.scene = new Scene();
-    this.scene.fog = new FogExp2(COLORS.background, 0.022);
+    this.scene.fog = new FogExp2(COLORS.background, 0.026);
 
     const aspect = canvas.clientWidth / canvas.clientHeight;
     this.camera = new PerspectiveCamera(SCENE_CONFIG.cameraFov, aspect, 0.1, 120);
@@ -82,26 +118,18 @@ export class TypoSceneController {
       this.initialCameraPosition.z,
     );
 
-    this.renderer = new WebGLRenderer({
-      canvas,
-      antialias: true,
-      alpha: false,
-      powerPreference: 'high-performance',
-    });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+    this.renderer.shadowMap.enabled = true;
     this.renderer.toneMapping = ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 0.95;
+    this.renderer.toneMappingExposure = 1.12;
 
     this.controls = new OrbitControls(this.camera, canvas);
     this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.06;
-    this.controls.minDistance = 7;
-    this.controls.maxDistance = 22;
-    this.controls.maxPolarAngle = Math.PI * 0.78;
-    this.controls.minPolarAngle = Math.PI * 0.28;
-    this.controls.rotateSpeed = 0.55;
-    this.controls.zoomSpeed = 0.7;
+    this.controls.dampingFactor = 0.045;
+    this.controls.minDistance = 6;
+    this.controls.maxDistance = 28;
+    this.controls.maxPolarAngle = Math.PI * 0.85;
     this.controls.target.set(0, 0, 0);
 
     this.postProcessing = createPostProcessing(
@@ -112,7 +140,9 @@ export class TypoSceneController {
       canvas.clientHeight,
     );
 
-    this.scene.add(createGradientSky());
+    this.environment = createEnvironment();
+    this.scene.add(this.environment.sky);
+    this.scene.add(this.environment.shapes);
 
     this.particles = new Group();
     this.particles.add(createParticleField());
@@ -121,55 +151,60 @@ export class TypoSceneController {
     this.setupLights();
     this.setupGrid();
     this.bindEvents();
-    void this.loadLetters();
+    this.loadLetters();
     this.animate();
   }
 
   private setupLights(): void {
-    const ambient = new AmbientLight(COLORS.ambient, 0.42);
-    this.scene.add(ambient);
+    this.scene.add(new AmbientLight(COLORS.ambient, 0.58));
 
-    const keyLight = new DirectionalLight(COLORS.directional, 1.1);
-    keyLight.position.set(4, 8, 6);
+    const keyLight = new DirectionalLight(COLORS.directional, 1.45);
+    keyLight.position.set(6, 10, 8);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
     this.scene.add(keyLight);
 
-    const fillLight = new PointLight(COLORS.pointCool, 18, 45);
-    fillLight.position.set(-6, 2, 4);
+    const fillLight = new PointLight(COLORS.pointCool, 26, 42);
+    fillLight.position.set(-8, 4, 6);
     this.scene.add(fillLight);
 
-    const rimLight = new PointLight(COLORS.pointWarm, 14, 38);
-    rimLight.position.set(4, -1, -6);
+    const rimLight = new PointLight(COLORS.pointWarm, 20, 36);
+    rimLight.position.set(5, -2, -8);
     this.scene.add(rimLight);
-
-    const accentLight = new PointLight(COLORS.accent, 8, 25);
-    accentLight.position.set(0, 3, 8);
-    this.scene.add(accentLight);
   }
 
   private setupGrid(): void {
-    const grid = new GridHelper(24, 48, COLORS.grid, COLORS.grid);
-    grid.position.y = -1.8;
-    grid.material.opacity = 0.14;
+    const grid = new GridHelper(30, 40, COLORS.grid, COLORS.grid);
+    grid.position.y = -2.4;
+    grid.material.opacity = 0.18;
     grid.material.transparent = true;
     this.scene.add(grid);
   }
 
-  private async loadLetters(): Promise<void> {
-    this.callbacks.onLoadProgress(0.15);
-    try {
-      const { group, letters } = await createLetters();
-      if (this.disposed) return;
-
-      this.letters = letters;
-      this.letterTargets = getLetterTargets(letters);
-      this.scene.add(group);
-      this.callbacks.onLoadProgress(1);
-      this.callbacks.onLoadComplete();
-    } catch {
-      if (!this.disposed) {
+  private loadLetters(): void {
+    this.callbacks.onLoadProgress(0.1);
+    const loader = new FontLoader();
+    loader.load(
+      FONT_PATH,
+      (font: Font) => {
+        if (this.disposed) return;
+        const { group, letters } = createLetters(font);
+        this.letters = letters;
+        this.letterMeshes = getLetterMeshes(letters);
+        this.scene.add(group);
+        this.callbacks.onLoadProgress(1);
         this.callbacks.onLoadComplete();
-      }
-    }
+      },
+      (event) => {
+        if (event.lengthComputable) {
+          const ratio = event.loaded / event.total;
+          this.callbacks.onLoadProgress(0.1 + ratio * 0.85);
+        }
+      },
+      () => {
+        if (!this.disposed) this.callbacks.onLoadComplete();
+      },
+    );
   }
 
   private bindEvents(): void {
@@ -187,23 +222,19 @@ export class TypoSceneController {
   }
 
   private readonly onPointerMove = (event: PointerEvent): void => {
-    if (this.letterTargets.length === 0) return;
+    if (this.letterMeshes.length === 0) return;
 
     const rect = this.canvas.getBoundingClientRect();
     this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
     this.raycaster.setFromCamera(this.pointer, this.camera);
-    const hits = this.raycaster.intersectObjects(this.letterTargets, false);
-    const hitObject = hits[0]?.object;
-
-    const letter =
-      this.letters.find((item) => item.text === hitObject) ?? null;
+    const hits = this.raycaster.intersectObjects(this.letterMeshes, false);
+    const hit = hits[0]?.object;
+    const letter = this.letters.find((item) => item.mesh === hit) ?? null;
 
     if (letter && letter !== this.hoveredLetter) {
-      if (this.hoveredLetter) {
-        animateLetterHover(this.hoveredLetter, false);
-      }
+      if (this.hoveredLetter) animateLetterHover(this.hoveredLetter, false);
       this.hoveredLetter = letter;
       animateLetterHover(letter, true);
       this.callbacks.onHoverChange(letter.char);
@@ -248,6 +279,7 @@ export class TypoSceneController {
     if (this.disposed) return;
 
     this.clock += 0.016;
+    this.environment.update(this.clock);
 
     if (this.autoRotate) {
       this.controls.autoRotate = true;
@@ -256,7 +288,7 @@ export class TypoSceneController {
       this.controls.autoRotate = false;
     }
 
-    this.particles.rotation.y = Math.sin(this.clock * 0.08) * 0.02 + this.clock * 0.0002;
+    this.particles.rotation.y += 0.00035;
     this.controls.update();
     this.postProcessing.composer.render();
     this.animationFrameId = requestAnimationFrame(this.animate);

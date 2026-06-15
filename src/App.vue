@@ -5,7 +5,6 @@ import LoadingOverlay from './components/LoadingOverlay.vue';
 import TypoScene from './components/TypoScene.vue';
 import WebGLFallback from './components/WebGLFallback.vue';
 import { useSceneStore } from './stores/sceneStore';
-import { isWebGLAvailable } from './utils/webgl';
 
 const store = useSceneStore();
 
@@ -17,7 +16,6 @@ function handleKeydown(event: KeyboardEvent): void {
 }
 
 onMounted(() => {
-  store.setWebglSupported(isWebGLAvailable());
   window.addEventListener('keydown', handleKeydown);
 });
 

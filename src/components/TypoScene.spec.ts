@@ -9,21 +9,20 @@ vi.mock('../three/TypoSceneController', () => {
   const resetCamera = vi.fn();
 
   return {
-    TypoSceneController: vi.fn(
-      class TypoSceneControllerMock {
-        setAutoRotate = setAutoRotate;
-
-        resetCamera = resetCamera;
-
-        dispose = dispose;
-      },
-    ),
+    TypoSceneController: {
+      create: vi.fn(() => ({
+        setAutoRotate,
+        resetCamera,
+        dispose,
+      })),
+    },
   };
 });
 
 describe('TypoScene', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    vi.clearAllMocks();
   });
 
   it('mounts canvas and wires scene controller lifecycle', async () => {
@@ -36,11 +35,13 @@ describe('TypoScene', () => {
     expect(wrapper.find('canvas.scene-canvas').exists()).toBe(true);
 
     const { TypoSceneController } = await import('../three/TypoSceneController');
-    expect(TypoSceneController).toHaveBeenCalledTimes(1);
+    expect(TypoSceneController.create).toHaveBeenCalledTimes(1);
 
     wrapper.unmount();
 
-    const instance = vi.mocked(TypoSceneController).mock.instances[0];
+    const instance = vi.mocked(TypoSceneController.create).mock.results[0]?.value as {
+      dispose: ReturnType<typeof vi.fn>;
+    };
     expect(instance?.dispose).toHaveBeenCalledTimes(1);
   });
 });
