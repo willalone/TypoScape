@@ -69,7 +69,7 @@ export class TypoSceneController {
 
   private readonly canvas: HTMLCanvasElement;
 
-  private readonly postProcessing: ReturnType<typeof createPostProcessing>;
+  private readonly postProcessing: ReturnType<typeof createPostProcessing> | null;
 
   private readonly environment: ReturnType<typeof createEnvironment>;
 
@@ -134,13 +134,19 @@ export class TypoSceneController {
     this.controls.rotateSpeed = 0.35;
     this.controls.autoRotate = false;
 
-    this.postProcessing = createPostProcessing(
-      this.renderer,
-      this.scene,
-      this.camera,
-      width,
-      height,
-    );
+    try {
+      this.postProcessing = createPostProcessing(
+        this.renderer,
+        this.scene,
+        this.camera,
+        width,
+        height,
+      );
+    } catch (error) {
+      console.warn('TypoScape: post-processing unavailable, using direct render.', error);
+      this.postProcessing = null;
+      this.useComposer = false;
+    }
 
     this.environment = createEnvironment();
     this.scene.add(this.environment.sky);
@@ -349,7 +355,7 @@ export class TypoSceneController {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height, false);
-    this.postProcessing.resize(width, height);
+    this.postProcessing?.resize(width, height);
   };
 
   private animate = (): void => {
@@ -373,7 +379,7 @@ export class TypoSceneController {
   };
 
   private renderFrame(): void {
-    if (this.useComposer) {
+    if (this.useComposer && this.postProcessing) {
       try {
         this.postProcessing.composer.render();
         return;
@@ -409,7 +415,7 @@ export class TypoSceneController {
     cancelAnimationFrame(this.animationFrameId);
     this.unbindEvents();
     this.controls.dispose();
-    this.postProcessing.dispose();
+    this.postProcessing?.dispose();
     disposeLetters(this.letters);
     this.renderer.dispose();
   }

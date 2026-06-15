@@ -1,9 +1,13 @@
 <script setup lang="ts">
 const previewSrc = `${import.meta.env.BASE_URL}docs/preview.svg`;
+
+function reloadPage(): void {
+  window.location.reload();
+}
 </script>
 
 <template>
-  <section class="preview" aria-label="Статическое превью TypoScape">
+  <section class="preview" aria-label="Превью TypoScape">
     <img
       class="preview__image"
       :src="previewSrc"
@@ -13,9 +17,11 @@ const previewSrc = `${import.meta.env.BASE_URL}docs/preview.svg`;
     />
     <p class="preview__title">TypoScape</p>
     <p class="preview__note">
-      Статическое превью. Для интерактивной 3D-сцены откройте демо в Chrome, Firefox или Safari
-      с включённым WebGL.
+      Превью-режим. Интерактивная 3D-сцена доступна в Chrome, Firefox или Safari с WebGL.
     </p>
+    <button type="button" class="preview__btn" @click="reloadPage()">
+      Запустить 3D-сцену
+    </button>
   </section>
 </template>
 
@@ -53,5 +59,20 @@ const previewSrc = `${import.meta.env.BASE_URL}docs/preview.svg`;
   font-size: 0.9rem;
   line-height: 1.55;
   color: rgba(242, 236, 227, 0.65);
+}
+
+.preview__btn {
+  margin-top: 1.1rem;
+  padding: 0.55rem 1.15rem;
+  border: 1px solid rgba(255, 176, 80, 0.45);
+  border-radius: 999px;
+  background: rgba(255, 176, 80, 0.12);
+  color: #ffd080;
+  cursor: pointer;
+  font: inherit;
+}
+
+.preview__btn:hover {
+  background: rgba(255, 176, 80, 0.22);
 }
 </style>

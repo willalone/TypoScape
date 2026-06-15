@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/willalone/TypoScape/actions/workflows/ci.yml/badge.svg)](https://github.com/willalone/TypoScape/actions/workflows/ci.yml)
 
-**Live demo:** [https://willalone.github.io/TypoScape/](https://willalone.github.io/TypoScape/)
+**Live demo:** [https://willalone.github.io/TypoScape/](https://willalone.github.io/TypoScape/) — откройте в Chrome / Firefox / Safari.
 
 Интерактивная 3D-типографика — объёмное слово **TYPO** в тёмном пространстве.
 
@@ -18,7 +18,7 @@
 | [src/three/createLetters.ts](https://github.com/willalone/TypoScape/blob/main/src/three/createLetters.ts) | Геометрия букв TYPO |
 | [src/three/animations.ts](https://github.com/willalone/TypoScape/blob/main/src/three/animations.ts) | GSAP: hover, click, intro |
 
-Файлы `.vue` — тонкие обёртки над TypeScript-модулями выше. Если GitHub UI показывает `.vue` пустым, откройте **Raw** или таблицу выше.
+Файлы `.vue` — тонкие обёртки. Основная логика — в `.ts` модулях из таблицы. Если GitHub UI показывает `.vue` пустым, используйте **Raw** или ссылки на `.ts` файлы.
 
 ## Что реализовано
 

@@ -28,6 +28,14 @@ describe('TypoScene', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    Object.defineProperty(HTMLCanvasElement.prototype, 'clientWidth', {
+      configurable: true,
+      get: () => 1024,
+    });
+    Object.defineProperty(HTMLCanvasElement.prototype, 'clientHeight', {
+      configurable: true,
+      get: () => 768,
+    });
   });
 
   it('mounts canvas and wires scene controller lifecycle', async () => {
@@ -35,17 +43,19 @@ describe('TypoScene', () => {
       global: {
         plugins: [createPinia()],
       },
+      attachTo: document.body,
     });
 
     expect(wrapper.find('canvas.scene-canvas').exists()).toBe(true);
 
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => resolve());
-    });
-    await wrapper.vm.$nextTick();
-
     const { TypoSceneController } = await import('../three/TypoSceneController');
-    expect(TypoSceneController).toHaveBeenCalledTimes(1);
+
+    await vi.waitFor(
+      () => {
+        expect(TypoSceneController).toHaveBeenCalledTimes(1);
+      },
+      { timeout: 3000 },
+    );
 
     wrapper.unmount();
 

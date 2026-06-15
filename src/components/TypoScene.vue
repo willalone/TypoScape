@@ -1,4 +1,14 @@
-<!-- TypoScape: WebGL canvas. Логика — src/components/useTypoScene.ts -->
+<!--
+  TypoScape — WebGL canvas.
+  GitHub UI иногда не отображает Vue SFC: логика в src/components/useTypoScene.ts
+  Raw: https://github.com/willalone/TypoScape/blob/main/src/components/useTypoScene.ts
+-->
+<script lang="ts">
+export default {
+  name: 'TypoSceneView',
+};
+</script>
+
 <script setup lang="ts">
 import { ref } from 'vue';
 import StaticPreview from './StaticPreview.vue';

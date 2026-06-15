@@ -1,4 +1,14 @@
-<!-- TypoScape: корневой layout. Логика — src/app/useAppShell.ts -->
+<!--
+  TypoScape — корневой layout.
+  GitHub UI иногда не отображает Vue SFC: логика в src/app/useAppShell.ts
+  Raw: https://github.com/willalone/TypoScape/blob/main/src/app/useAppShell.ts
+-->
+<script lang="ts">
+export default {
+  name: 'AppRoot',
+};
+</script>
+
 <script setup lang="ts">
 import { useAppShell } from './app/useAppShell';
 import AppOverlay from './components/AppOverlay.vue';
