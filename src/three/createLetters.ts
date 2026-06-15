@@ -4,7 +4,7 @@ import {
   Group,
   Mesh,
   MeshBasicMaterial,
-  MeshPhysicalMaterial,
+  MeshStandardMaterial,
 } from 'three';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import type { Font } from 'three/examples/jsm/loaders/FontLoader.js';
@@ -21,22 +21,32 @@ const GEO_OPTIONS = {
   bevelSegments: 2,
 } as const;
 
-function createLetterMaterial(tintHex: number): MeshPhysicalMaterial {
+function createLetterMaterial(tintHex: number): MeshStandardMaterial {
   const tint = new Color(tintHex);
-  return new MeshPhysicalMaterial({
+  return new MeshStandardMaterial({
     color: tint,
     emissive: tint,
-    emissiveIntensity: 0.38,
-    metalness: 0.28,
-    roughness: 0.22,
-    clearcoat: 0.85,
-    clearcoatRoughness: 0.08,
+    emissiveIntensity: SCENE_CONFIG.letterEmissiveIntensity,
+    metalness: 0.04,
+    roughness: 0.42,
+    fog: false,
   });
 }
 
-function createOutlineMaterial(): MeshBasicMaterial {
+function createHaloMaterial(): MeshBasicMaterial {
   return new MeshBasicMaterial({
-    color: new Color(COLORS.letterOutline),
+    color: new Color(COLORS.letterHalo),
+    transparent: true,
+    opacity: 0.62,
+    depthWrite: false,
+    fog: false,
+  });
+}
+
+function createStrokeMaterial(): MeshBasicMaterial {
+  return new MeshBasicMaterial({
+    color: new Color(COLORS.letterStroke),
+    fog: false,
   });
 }
 
@@ -73,26 +83,32 @@ export function createLetters(font: Font): {
 
     const tint = LETTER_TINTS[index] ?? COLORS.letterGlass;
     const material = createLetterMaterial(tint);
-    const outlineMaterial = createOutlineMaterial();
+    const haloMaterial = createHaloMaterial();
+    const strokeMaterial = createStrokeMaterial();
 
     const letterGroup = new Group();
-    const outlineMesh = new Mesh(geometry, outlineMaterial);
-    outlineMesh.scale.setScalar(1.055);
-    outlineMesh.renderOrder = 0;
+    const haloMesh = new Mesh(geometry, haloMaterial);
+    haloMesh.scale.setScalar(SCENE_CONFIG.letterHaloScale);
+    haloMesh.renderOrder = 0;
+
+    const strokeMesh = new Mesh(geometry, strokeMaterial);
+    strokeMesh.scale.setScalar(SCENE_CONFIG.letterStrokeScale);
+    strokeMesh.renderOrder = 1;
 
     const mesh = new Mesh(geometry, material);
-    mesh.renderOrder = 1;
+    mesh.renderOrder = 2;
 
     const x = cursorX + width / 2;
     letterGroup.position.set(x, 0, 0);
 
-    letterGroup.add(outlineMesh, mesh);
+    letterGroup.add(haloMesh, strokeMesh, mesh);
 
     group.add(letterGroup);
     letters.push({
       group: letterGroup,
       mesh,
-      outlineMesh,
+      haloMesh,
+      strokeMesh,
       char,
       basePosition: letterGroup.position.clone(),
       baseRotation: letterGroup.rotation.clone(),
@@ -101,7 +117,8 @@ export function createLetters(font: Font): {
       isHovered: false,
       hoverTween: null,
       material,
-      outlineMaterial,
+      haloMaterial,
+      strokeMaterial,
       wavePhase: index * 0.6,
       glassTint: tint,
     });
@@ -125,6 +142,7 @@ export function disposeLetters(letters: LetterObject[]): void {
       disposed.add(letter.mesh.geometry);
     }
     letter.material.dispose();
-    letter.outlineMaterial.dispose();
+    letter.haloMaterial.dispose();
+    letter.strokeMaterial.dispose();
   });
 }

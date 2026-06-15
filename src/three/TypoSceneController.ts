@@ -187,22 +187,30 @@ export class TypoSceneController {
   }
 
   private setupLights(): void {
-    this.scene.add(new AmbientLight(COLORS.ambient, 0.55));
+    this.scene.add(new AmbientLight(COLORS.ambient, 0.65));
 
-    const key = new DirectionalLight(COLORS.directional, 1.5);
+    const key = new DirectionalLight(COLORS.directional, 1.2);
     key.position.set(4, 10, 8);
     this.scene.add(key);
 
-    const cool = new PointLight(COLORS.pointCool, 22, 40);
+    const fill = new DirectionalLight(0xfff4e0, 2.4);
+    fill.position.set(0, 1.5, 12);
+    this.scene.add(fill);
+
+    const rim = new DirectionalLight(COLORS.neonWarm, 0.6);
+    rim.position.set(0, -2, -8);
+    this.scene.add(rim);
+
+    const cool = new PointLight(COLORS.pointCool, 14, 40);
     cool.position.set(-6, 3, 5);
     this.scene.add(cool);
 
-    const warm = new PointLight(COLORS.pointWarm, 20, 36);
+    const warm = new PointLight(COLORS.pointWarm, 12, 36);
     warm.position.set(6, 0, -6);
     this.scene.add(warm);
 
-    const front = new PointLight(COLORS.neonWarm, 16, 22);
-    front.position.set(0, 1, 8);
+    const front = new PointLight(COLORS.neonWarm, 24, 28);
+    front.position.set(0, 0.5, 9);
     this.scene.add(front);
   }
 

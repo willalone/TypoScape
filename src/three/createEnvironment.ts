@@ -23,7 +23,7 @@ export function createEnvironment(): EnvironmentObjects {
     uniforms: {
       topColor: { value: new Color(COLORS.backgroundTop) },
       bottomColor: { value: new Color(COLORS.background) },
-      accent: { value: new Color(COLORS.neonCool).multiplyScalar(0.12) },
+      accent: { value: new Color(COLORS.neonCool).multiplyScalar(0.04) },
       time: { value: 0 },
     },
     vertexShader: `
@@ -43,7 +43,7 @@ export function createEnvironment(): EnvironmentObjects {
       void main() {
         float h = normalize(vWorldPosition).y * 0.5 + 0.5;
         vec3 col = mix(bottomColor, topColor, smoothstep(0.0, 1.0, h));
-        col += accent * (0.5 + 0.5 * sin(time * 0.25 + h * 8.0));
+        col += accent * (0.5 + 0.5 * sin(time * 0.25 + h * 8.0)) * 0.35;
         gl_FragColor = vec4(col, 1.0);
       }
     `,

@@ -10,6 +10,16 @@
 
 > **Демо:** откройте ссылку в Chrome, Firefox или Safari с включённым JavaScript и WebGL. Если сцена не загрузилась — обновите страницу или проверьте аппаратное ускорение в настройках браузера.
 
+## Проверка исходников
+
+Код в репозитории полный — ключевые файлы:
+
+- [src/App.vue](https://github.com/willalone/TypoScape/blob/main/src/App.vue) (~40 строк)
+- [src/components/TypoScene.vue](https://github.com/willalone/TypoScape/blob/main/src/components/TypoScene.vue) (~90 строк)
+- [src/three/TypoSceneController.ts](https://github.com/willalone/TypoScape/blob/main/src/three/TypoSceneController.ts) (~400 строк)
+
+> Если GitHub UI показывает файл «пустым» — откройте **Raw** или перейдите по ссылкам выше: Vue SFC-файлы иногда некорректно парсятся автоматическими ревью-системами.
+
 ## Дизайн-концепция
 
 **Идея:** типографика как физический объект в пространстве — не плоский текст, а материал со светом и весом.

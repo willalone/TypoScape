@@ -15,7 +15,12 @@ onMounted(async () => {
     requestAnimationFrame(() => resolve());
   });
 
-  if (!canvasRef.value) return;
+  const canvas = canvasRef.value;
+  if (!canvas) {
+    initError.value = 'Canvas не найден. Обновите страницу.';
+    store.setSceneReady(true);
+    return;
+  }
 
   store.setSceneReady(false);
   store.setLoadProgress(0);
@@ -23,7 +28,7 @@ onMounted(async () => {
   try {
     const { TypoSceneController } = await import('../three/TypoSceneController');
     controller = new TypoSceneController(
-      canvasRef.value,
+      canvas,
       {
         onHoverChange: (char) => store.setHoveredLetter(char),
         onLetterClick: (char) => store.setClickedLetter(char),
@@ -36,7 +41,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('TypoScene init failed:', error);
     initError.value =
-      'Не удалось запустить 3D-сцену. Убедитесь, что WebGL включён и аппаратное ускорение активно.';
+      '3D-рендер не инициализировался. Попробуйте обновить страницу или открыть демо в другом браузере.';
     store.setSceneReady(true);
   }
 });
@@ -69,13 +74,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <WebGLFallback v-if="initError" :message="initError" />
   <canvas
-    v-else
     ref="canvasRef"
     class="scene-canvas"
     aria-label="Интерактивная 3D-сцена TypoScape"
   />
+  <WebGLFallback v-if="initError" :message="initError" />
 </template>
 
 <style scoped>

@@ -55,7 +55,8 @@ export function animateLetterHover(letter: LetterObject, isHovered: boolean): vo
       const emissive = baseEmissive.clone().lerp(hoverEmissive, colorState.t);
       material.color.copy(fill);
       material.emissive.copy(emissive);
-      material.emissiveIntensity = 0.42 + colorState.t * 0.55;
+      material.emissiveIntensity =
+        SCENE_CONFIG.letterEmissiveIntensity + colorState.t * 0.45;
     },
   });
 
@@ -109,7 +110,7 @@ export function animateLetterClick(
       group.rotation.copy(letter.baseRotation);
       material.color.set(letter.glassTint);
       material.emissive.set(COLORS.letterEmissive);
-      material.emissiveIntensity = 0.38;
+      material.emissiveIntensity = SCENE_CONFIG.letterEmissiveIntensity;
     },
   });
 
@@ -192,7 +193,7 @@ export function animateLetterClick(
       '<',
     )
     .to(material, {
-      emissiveIntensity: 0.38,
+      emissiveIntensity: SCENE_CONFIG.letterEmissiveIntensity,
       duration: 0.55,
       ease: 'power2.out',
     });
