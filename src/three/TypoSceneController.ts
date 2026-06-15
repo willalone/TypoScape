@@ -76,6 +76,8 @@ export class TypoSceneController {
 
   private clock = 0;
 
+  private useComposer = true;
+
   private cameraZ: number;
 
   private readonly initialCameraPosition: { x: number; y: number; z: number };
@@ -201,16 +203,26 @@ export class TypoSceneController {
         this.letterMeshes = getLetterMeshes(letters);
         this.scene.add(group);
 
-        animateLettersIntro(
-          letters,
-          this.flashLight,
-          (value) => {
-            this.callbacks.onLoadProgress(0.35 + value * 0.65);
-          },
-          () => {
-            this.callbacks.onLoadComplete();
-          },
-        );
+        try {
+          animateLettersIntro(
+            letters,
+            this.flashLight,
+            (value) => {
+              this.callbacks.onLoadProgress(0.35 + value * 0.65);
+            },
+            () => {
+              this.callbacks.onLoadComplete();
+            },
+          );
+        } catch (error) {
+          console.error('Intro animation failed:', error);
+          letters.forEach((letter) => {
+            letter.group.visible = true;
+            letter.group.scale.setScalar(letter.baseScale);
+            letter.group.position.copy(letter.basePosition);
+          });
+          this.callbacks.onLoadComplete();
+        }
       },
       (event) => {
         if (event.lengthComputable) {
@@ -288,7 +300,7 @@ export class TypoSceneController {
 
   private readonly onClick = (): void => {
     if (!this.hoveredLetter) return;
-    animateLetterClick(this.hoveredLetter);
+    animateLetterClick(this.hoveredLetter, this.flashLight);
     if (this.soundEnabled) playClickSound();
     this.callbacks.onLetterClick(this.hoveredLetter.char);
   };
@@ -323,9 +335,23 @@ export class TypoSceneController {
 
     this.particles.rotation.y += 0.00035;
     this.controls.update();
-    this.postProcessing.composer.render();
+    this.renderFrame();
     this.animationFrameId = requestAnimationFrame(this.animate);
   };
+
+  private renderFrame(): void {
+    if (this.useComposer) {
+      try {
+        this.postProcessing.composer.render();
+        return;
+      } catch (error) {
+        console.warn('Post-processing failed, using direct render:', error);
+        this.useComposer = false;
+      }
+    }
+
+    this.renderer.render(this.scene, this.camera);
+  }
 
   setAutoRotate(enabled: boolean): void {
     this.autoRotate = enabled;

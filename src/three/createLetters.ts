@@ -22,26 +22,21 @@ const GEO_OPTIONS = {
 } as const;
 
 function createLetterMaterial(tintHex: number): MeshPhysicalMaterial {
+  const tint = new Color(tintHex);
   return new MeshPhysicalMaterial({
-    color: new Color(tintHex),
-    emissive: new Color(COLORS.letterEmissive),
-    emissiveIntensity: 0.42,
-    metalness: 0.15,
-    roughness: 0.12,
-    transmission: 0.18,
-    thickness: 0.5,
-    ior: 1.45,
-    clearcoat: 0.9,
-    clearcoatRoughness: 0.06,
-    transparent: true,
+    color: tint,
+    emissive: tint,
+    emissiveIntensity: 0.38,
+    metalness: 0.28,
+    roughness: 0.22,
+    clearcoat: 0.85,
+    clearcoatRoughness: 0.08,
   });
 }
 
 function createOutlineMaterial(): MeshBasicMaterial {
   return new MeshBasicMaterial({
     color: new Color(COLORS.letterOutline),
-    transparent: true,
-    opacity: 0.92,
   });
 }
 
@@ -82,20 +77,16 @@ export function createLetters(font: Font): {
 
     const letterGroup = new Group();
     const outlineMesh = new Mesh(geometry, outlineMaterial);
-    outlineMesh.scale.setScalar(1.038);
+    outlineMesh.scale.setScalar(1.055);
+    outlineMesh.renderOrder = 0;
 
     const mesh = new Mesh(geometry, material);
+    mesh.renderOrder = 1;
 
     const x = cursorX + width / 2;
-    const y = 0;
-    const z = 0;
+    letterGroup.position.set(x, 0, 0);
 
-    letterGroup.position.set(x, y, z);
     letterGroup.add(outlineMesh, mesh);
-
-    const basePosition = letterGroup.position.clone();
-    const baseRotation = letterGroup.rotation.clone();
-    const baseScale = 1;
 
     group.add(letterGroup);
     letters.push({
@@ -103,9 +94,9 @@ export function createLetters(font: Font): {
       mesh,
       outlineMesh,
       char,
-      basePosition,
-      baseRotation,
-      baseScale,
+      basePosition: letterGroup.position.clone(),
+      baseRotation: letterGroup.rotation.clone(),
+      baseScale: 1,
       isAnimating: false,
       isHovered: false,
       hoverTween: null,
@@ -126,7 +117,7 @@ export function getLetterMeshes(letters: LetterObject[]): Mesh[] {
 }
 
 export function disposeLetters(letters: LetterObject[]): void {
-  const disposed = new Set();
+  const disposed = new Set<import('three').BufferGeometry>();
   letters.forEach((letter) => {
     letter.hoverTween?.kill();
     if (!disposed.has(letter.mesh.geometry)) {

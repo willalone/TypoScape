@@ -76,12 +76,29 @@ export function animateLetterHover(letter: LetterObject, isHovered: boolean): vo
   }
 }
 
-export function animateLetterClick(letter: LetterObject): void {
+export function animateLetterClick(
+  letter: LetterObject,
+  flashLight?: PointLight,
+): void {
   if (letter.isAnimating) return;
 
   letter.isAnimating = true;
   letter.isHovered = false;
   stopHoverPulse(letter);
+
+  if (flashLight) {
+    gsap.fromTo(
+      flashLight,
+      { intensity: 4 },
+      {
+        intensity: 22,
+        duration: 0.12,
+        yoyo: true,
+        repeat: 1,
+        ease: 'power2.out',
+      },
+    );
+  }
 
   const { material, group } = letter;
   const timeline = gsap.timeline({
@@ -90,10 +107,9 @@ export function animateLetterClick(letter: LetterObject): void {
       group.scale.setScalar(letter.baseScale);
       group.position.copy(letter.basePosition);
       group.rotation.copy(letter.baseRotation);
-      material.opacity = 1;
       material.color.set(letter.glassTint);
       material.emissive.set(COLORS.letterEmissive);
-      material.emissiveIntensity = 0.42;
+      material.emissiveIntensity = 0.38;
     },
   });
 
@@ -135,7 +151,6 @@ export function animateLetterClick(letter: LetterObject): void {
     .to(
       material,
       {
-        opacity: 0.45,
         emissiveIntensity: 1.1,
         duration: 0.25,
         ease: 'sine.inOut',
@@ -170,13 +185,17 @@ export function animateLetterClick(letter: LetterObject): void {
     .to(
       material,
       {
-        opacity: 1,
-        emissiveIntensity: 0.42,
-        duration: 0.4,
+        emissiveIntensity: 0.85,
+        duration: 0.18,
         ease: 'power2.out',
       },
       '<',
-    );
+    )
+    .to(material, {
+      emissiveIntensity: 0.38,
+      duration: 0.55,
+      ease: 'power2.out',
+    });
 }
 
 export function animateLettersIntro(
@@ -192,18 +211,30 @@ export function animateLettersIntro(
       letter.basePosition.y - 4,
       letter.basePosition.z,
     );
-    letter.material.opacity = 0;
+    letter.group.visible = false;
   });
 
   const timeline = gsap.timeline({
     onComplete: () => {
-      playIntroSound();
+      try {
+        playIntroSound();
+      } catch {
+        /* autoplay policy — не блокируем показ сцены */
+      }
       onComplete();
     },
   });
 
   letters.forEach((letter, index) => {
     const offset = index * SCENE_CONFIG.introStagger;
+    timeline.call(
+      () => {
+        letter.group.visible = true;
+        onProgress((index + 1) / letters.length);
+      },
+      [],
+      offset,
+    );
     timeline.to(
       letter.group.scale,
       {
@@ -225,18 +256,6 @@ export function animateLettersIntro(
         ease: 'power4.out',
       },
       offset,
-    );
-    timeline.to(
-      letter.material,
-      {
-        opacity: 1,
-        duration: 0.45,
-        ease: 'power2.out',
-        onStart: () => {
-          onProgress((index + 1) / letters.length);
-        },
-      },
-      offset + 0.1,
     );
   });
 
