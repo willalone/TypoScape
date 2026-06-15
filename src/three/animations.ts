@@ -1,6 +1,8 @@
 import gsap from 'gsap';
 import { Color } from 'three';
+import type { PointLight } from 'three';
 import { COLORS, SCENE_CONFIG } from '../constants/config';
+import { playIntroSound } from '../utils/sound';
 import type { LetterObject } from './types';
 
 const hoverColor = new Color(COLORS.hoverAccent);
@@ -10,6 +12,13 @@ const hoverEmissive = new Color(COLORS.hoverEmissive);
 function stopHoverPulse(letter: LetterObject): void {
   letter.hoverTween?.kill();
   letter.hoverTween = null;
+}
+
+function animateGroup(
+  letter: LetterObject,
+  props: gsap.TweenVars,
+): gsap.core.Tween {
+  return gsap.to(letter.group, props);
 }
 
 export function animateLetterHover(letter: LetterObject, isHovered: boolean): void {
@@ -23,22 +32,20 @@ export function animateLetterHover(letter: LetterObject, isHovered: boolean): vo
     ? letter.baseScale * SCENE_CONFIG.hoverScale
     : letter.baseScale;
 
-  gsap.to(letter.mesh.scale, {
-    x: targetScale,
-    y: targetScale,
-    z: targetScale,
+  animateGroup(letter, {
+    scale: targetScale,
     duration: 0.5,
     ease: 'power3.out',
   });
 
-  gsap.to(letter.mesh.position, {
-    z: letter.basePosition.z + (isHovered ? 0.22 : 0),
+  gsap.to(letter.group.position, {
+    z: letter.basePosition.z + (isHovered ? 0.18 : 0),
     duration: 0.55,
     ease: 'power3.out',
   });
 
-  const colorState = { t: isHovered ? 1 : 0 };
   const baseColor = new Color(letter.glassTint);
+  const colorState = { t: isHovered ? 1 : 0 };
   gsap.to(colorState, {
     t: isHovered ? 1 : 0,
     duration: 0.55,
@@ -48,15 +55,15 @@ export function animateLetterHover(letter: LetterObject, isHovered: boolean): vo
       const emissive = baseEmissive.clone().lerp(hoverEmissive, colorState.t);
       material.color.copy(fill);
       material.emissive.copy(emissive);
-      material.emissiveIntensity = 0.12 + colorState.t * 0.65;
+      material.emissiveIntensity = 0.42 + colorState.t * 0.55;
     },
   });
 
   if (isHovered) {
     const pulse = { intensity: material.emissiveIntensity };
     letter.hoverTween = gsap.to(pulse, {
-      intensity: material.emissiveIntensity + 0.35,
-      duration: 0.9,
+      intensity: material.emissiveIntensity + 0.25,
+      duration: 0.85,
       yoyo: true,
       repeat: -1,
       ease: 'sine.inOut',
@@ -76,50 +83,50 @@ export function animateLetterClick(letter: LetterObject): void {
   letter.isHovered = false;
   stopHoverPulse(letter);
 
-  const { material, mesh } = letter;
+  const { material, group } = letter;
   const timeline = gsap.timeline({
     onComplete: () => {
       letter.isAnimating = false;
-      mesh.scale.setScalar(letter.baseScale);
-      mesh.position.copy(letter.basePosition);
-      mesh.rotation.copy(letter.baseRotation);
+      group.scale.setScalar(letter.baseScale);
+      group.position.copy(letter.basePosition);
+      group.rotation.copy(letter.baseRotation);
       material.opacity = 1;
       material.color.set(letter.glassTint);
       material.emissive.set(COLORS.letterEmissive);
-      material.emissiveIntensity = 0.12;
+      material.emissiveIntensity = 0.42;
     },
   });
 
   timeline
-    .to(mesh.scale, {
-      x: letter.baseScale * 1.12,
-      y: letter.baseScale * 0.82,
-      z: letter.baseScale * 1.08,
+    .to(group.scale, {
+      x: letter.baseScale * 1.1,
+      y: letter.baseScale * 0.84,
+      z: letter.baseScale * 1.06,
       duration: 0.14,
       ease: 'power2.in',
     })
-    .to(mesh.scale, {
-      x: letter.baseScale * 0.95,
-      y: letter.baseScale * 1.18,
-      z: letter.baseScale * 0.95,
+    .to(group.scale, {
+      x: letter.baseScale * 0.94,
+      y: letter.baseScale * 1.14,
+      z: letter.baseScale * 0.94,
       duration: 0.1,
       ease: 'power2.out',
     })
     .to(
-      mesh.position,
+      group.position,
       {
-        y: letter.basePosition.y + 3.2,
-        z: letter.basePosition.z + 0.6,
+        y: letter.basePosition.y + 3,
+        z: letter.basePosition.z + 0.5,
         duration: 0.55,
         ease: 'power4.out',
       },
       '-=0.02',
     )
     .to(
-      mesh.rotation,
+      group.rotation,
       {
-        x: letter.baseRotation.x - 0.35,
-        z: letter.baseRotation.z + Math.PI * 0.55,
+        x: letter.baseRotation.x - 0.3,
+        z: letter.baseRotation.z + Math.PI * 0.5,
         duration: 0.55,
         ease: 'power3.out',
       },
@@ -128,21 +135,22 @@ export function animateLetterClick(letter: LetterObject): void {
     .to(
       material,
       {
-        opacity: 0.4,
-        emissiveIntensity: 1.2,
+        opacity: 0.45,
+        emissiveIntensity: 1.1,
         duration: 0.25,
         ease: 'sine.inOut',
       },
       '<25%',
     )
-    .to(mesh.position, {
+    .to(group.position, {
+      x: letter.basePosition.x,
       y: letter.basePosition.y,
       z: letter.basePosition.z,
       duration: 0.65,
       ease: 'power4.inOut',
     })
     .to(
-      mesh.rotation,
+      group.rotation,
       {
         x: letter.baseRotation.x,
         y: letter.baseRotation.y,
@@ -152,18 +160,7 @@ export function animateLetterClick(letter: LetterObject): void {
       },
       '<',
     )
-    .to(
-      mesh.scale,
-      {
-        x: letter.baseScale * 1.06,
-        y: letter.baseScale * 0.94,
-        z: letter.baseScale,
-        duration: 0.12,
-        ease: 'power2.in',
-      },
-      '-=0.18',
-    )
-    .to(mesh.scale, {
+    .to(group.scale, {
       x: letter.baseScale,
       y: letter.baseScale,
       z: letter.baseScale,
@@ -174,12 +171,89 @@ export function animateLetterClick(letter: LetterObject): void {
       material,
       {
         opacity: 1,
-        emissiveIntensity: 0.2,
+        emissiveIntensity: 0.42,
         duration: 0.4,
         ease: 'power2.out',
       },
       '<',
     );
+}
+
+export function animateLettersIntro(
+  letters: LetterObject[],
+  flashLight: PointLight,
+  onProgress: (value: number) => void,
+  onComplete: () => void,
+): void {
+  letters.forEach((letter) => {
+    letter.group.scale.setScalar(0.001);
+    letter.group.position.set(
+      letter.basePosition.x,
+      letter.basePosition.y - 4,
+      letter.basePosition.z,
+    );
+    letter.material.opacity = 0;
+  });
+
+  const timeline = gsap.timeline({
+    onComplete: () => {
+      playIntroSound();
+      onComplete();
+    },
+  });
+
+  letters.forEach((letter, index) => {
+    const offset = index * SCENE_CONFIG.introStagger;
+    timeline.to(
+      letter.group.scale,
+      {
+        x: letter.baseScale,
+        y: letter.baseScale,
+        z: letter.baseScale,
+        duration: 0.7,
+        ease: 'back.out(1.6)',
+      },
+      offset,
+    );
+    timeline.to(
+      letter.group.position,
+      {
+        x: letter.basePosition.x,
+        y: letter.basePosition.y,
+        z: letter.basePosition.z,
+        duration: 0.75,
+        ease: 'power4.out',
+      },
+      offset,
+    );
+    timeline.to(
+      letter.material,
+      {
+        opacity: 1,
+        duration: 0.45,
+        ease: 'power2.out',
+        onStart: () => {
+          onProgress((index + 1) / letters.length);
+        },
+      },
+      offset + 0.1,
+    );
+  });
+
+  timeline.to(
+    flashLight,
+    {
+      intensity: 28,
+      duration: 0.15,
+      ease: 'power2.out',
+    },
+    '-=0.2',
+  );
+  timeline.to(flashLight, {
+    intensity: 6,
+    duration: 0.8,
+    ease: 'power3.inOut',
+  });
 }
 
 export function animateCameraReset(

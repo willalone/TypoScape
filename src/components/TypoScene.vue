@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useSceneStore } from '../stores/sceneStore';
-import { TypoSceneController } from '../three/TypoSceneController';
+import type { TypoSceneController } from '../three/TypoSceneController';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const store = useSceneStore();
@@ -15,10 +15,21 @@ onMounted(async () => {
 
   if (!canvasRef.value) return;
 
-  controller = new TypoSceneController(canvasRef.value, {
-    onHoverChange: (char) => store.setHoveredLetter(char),
-    onLetterClick: () => undefined,
-  });
+  store.setSceneReady(false);
+  store.setLoadProgress(0);
+
+  const { TypoSceneController } = await import('../three/TypoSceneController');
+
+  controller = new TypoSceneController(
+    canvasRef.value,
+    {
+      onHoverChange: (char) => store.setHoveredLetter(char),
+      onLetterClick: (char) => store.setClickedLetter(char),
+      onLoadProgress: (progress) => store.setLoadProgress(progress),
+      onLoadComplete: () => store.setSceneReady(true),
+    },
+    { soundEnabled: store.soundEnabled },
+  );
 
   controller.setAutoRotate(store.autoRotate);
 });
@@ -27,6 +38,13 @@ watch(
   () => store.autoRotate,
   (enabled) => {
     controller?.setAutoRotate(enabled);
+  },
+);
+
+watch(
+  () => store.soundEnabled,
+  (enabled) => {
+    controller?.setSoundEnabled(enabled);
   },
 );
 
@@ -47,6 +65,7 @@ onBeforeUnmount(() => {
   <canvas
     ref="canvasRef"
     class="scene-canvas"
+    :class="{ 'scene-canvas--ready': store.isSceneReady }"
     aria-label="Интерактивная 3D-сцена TypoScape"
   />
 </template>
@@ -57,5 +76,11 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   touch-action: none;
+  opacity: 0;
+  transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.scene-canvas--ready {
+  opacity: 1;
 }
 </style>

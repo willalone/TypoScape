@@ -6,12 +6,15 @@ import TypoScene from '../components/TypoScene.vue';
 vi.mock('../three/TypoSceneController', () => {
   const dispose = vi.fn();
   const setAutoRotate = vi.fn();
+  const setSoundEnabled = vi.fn();
   const resetCamera = vi.fn();
 
   return {
     TypoSceneController: vi.fn(
       class TypoSceneControllerMock {
         setAutoRotate = setAutoRotate;
+
+        setSoundEnabled = setSoundEnabled;
 
         resetCamera = resetCamera;
 

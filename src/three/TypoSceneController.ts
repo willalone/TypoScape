@@ -15,13 +15,19 @@ import {
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import type { Font } from 'three/examples/jsm/loaders/FontLoader.js';
-import { COLORS, FONT_PATH, SCENE_CONFIG } from '../constants/config';
-import { animateCameraReset, animateLetterClick, animateLetterHover } from './animations';
+import { COLORS, FONT_PATH, SCENE_CONFIG, getCameraDistance } from '../constants/config';
+import {
+  animateCameraReset,
+  animateLetterClick,
+  animateLetterHover,
+  animateLettersIntro,
+} from './animations';
 import { createEnvironment } from './createEnvironment';
-import { createLetters, getLetterMeshes } from './createLetters';
+import { createLetters, disposeLetters, getLetterMeshes } from './createLetters';
 import { createParticleField } from './createParticles';
 import { createPostProcessing } from './createPostProcessing';
 import type { LetterObject, SceneCallbacks } from './types';
+import { playClickSound, playHoverSound } from '../utils/sound';
 
 function getCanvasSize(canvas: HTMLCanvasElement): { width: number; height: number } {
   const width = canvas.clientWidth || window.innerWidth;
@@ -54,6 +60,8 @@ export class TypoSceneController {
 
   private autoRotate = false;
 
+  private soundEnabled = true;
+
   private readonly callbacks: SceneCallbacks;
 
   private readonly particles: Group;
@@ -64,26 +72,36 @@ export class TypoSceneController {
 
   private readonly environment: ReturnType<typeof createEnvironment>;
 
+  private readonly flashLight: PointLight;
+
   private clock = 0;
 
-  private readonly initialCameraPosition = {
-    x: 0,
-    y: SCENE_CONFIG.cameraY,
-    z: SCENE_CONFIG.cameraZ,
-  };
+  private cameraZ: number;
+
+  private readonly initialCameraPosition: { x: number; y: number; z: number };
 
   private readonly initialTarget = { x: 0, y: 0, z: 0 };
 
   constructor(
     canvas: HTMLCanvasElement,
     callbacks: SceneCallbacks,
+    options?: { soundEnabled?: boolean },
   ) {
     this.canvas = canvas;
     this.callbacks = callbacks;
-    this.scene = new Scene();
-    this.scene.fog = new FogExp2(COLORS.background, 0.024);
+    this.soundEnabled = options?.soundEnabled ?? true;
 
     const { width, height } = getCanvasSize(canvas);
+    this.cameraZ = getCameraDistance(width);
+    this.initialCameraPosition = {
+      x: 0,
+      y: SCENE_CONFIG.cameraY,
+      z: this.cameraZ,
+    };
+
+    this.scene = new Scene();
+    this.scene.fog = new FogExp2(COLORS.background, 0.022);
+
     const aspect = width / height;
     this.camera = new PerspectiveCamera(SCENE_CONFIG.cameraFov, aspect, 0.1, 120);
     this.camera.position.set(
@@ -102,15 +120,15 @@ export class TypoSceneController {
     this.renderer.setSize(width, height, false);
     this.renderer.shadowMap.enabled = true;
     this.renderer.toneMapping = ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.18;
+    this.renderer.toneMappingExposure = 1.22;
 
     this.controls = new OrbitControls(this.camera, canvas);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.085;
     this.controls.minDistance = 7;
     this.controls.maxDistance = 20;
-    this.controls.maxPolarAngle = Math.PI * 0.55;
-    this.controls.minPolarAngle = Math.PI * 0.38;
+    this.controls.maxPolarAngle = Math.PI * 0.52;
+    this.controls.minPolarAngle = Math.PI * 0.42;
     this.controls.rotateSpeed = 0.35;
     this.controls.autoRotate = false;
 
@@ -130,6 +148,10 @@ export class TypoSceneController {
     this.particles.add(createParticleField());
     this.scene.add(this.particles);
 
+    this.flashLight = new PointLight(COLORS.accent, 0, 30);
+    this.flashLight.position.set(0, 2, 4);
+    this.scene.add(this.flashLight);
+
     this.setupLights();
     this.setupGrid();
     this.bindEvents();
@@ -138,53 +160,67 @@ export class TypoSceneController {
   }
 
   private setupLights(): void {
-    this.scene.add(new AmbientLight(COLORS.ambient, 0.5));
+    this.scene.add(new AmbientLight(COLORS.ambient, 0.55));
 
-    const key = new DirectionalLight(COLORS.directional, 1.35);
-    key.position.set(5, 9, 7);
-    key.castShadow = true;
-    key.shadow.mapSize.set(1024, 1024);
+    const key = new DirectionalLight(COLORS.directional, 1.5);
+    key.position.set(4, 10, 8);
     this.scene.add(key);
 
-    const cool = new PointLight(COLORS.pointCool, 24, 42);
-    cool.position.set(-7, 3, 5);
+    const cool = new PointLight(COLORS.pointCool, 22, 40);
+    cool.position.set(-6, 3, 5);
     this.scene.add(cool);
 
-    const warm = new PointLight(COLORS.pointWarm, 18, 36);
-    warm.position.set(6, -1, -7);
+    const warm = new PointLight(COLORS.pointWarm, 20, 36);
+    warm.position.set(6, 0, -6);
     this.scene.add(warm);
 
-    const accent = new PointLight(COLORS.neonCool, 14, 20);
-    accent.position.set(0, 2, 6);
-    this.scene.add(accent);
-
-    const back = new PointLight(COLORS.neonWarm, 8, 18);
-    back.position.set(0, 1, -5);
-    this.scene.add(back);
+    const front = new PointLight(COLORS.neonWarm, 16, 22);
+    front.position.set(0, 1, 8);
+    this.scene.add(front);
   }
 
   private setupGrid(): void {
     const grid = new GridHelper(28, 56, COLORS.grid, COLORS.gridFade);
     grid.position.y = -2.35;
-    grid.material.opacity = 0.16;
+    grid.material.opacity = 0.12;
     grid.material.transparent = true;
     this.scene.add(grid);
   }
 
   private loadLetters(): void {
+    this.callbacks.onLoadProgress(0.05);
     const loader = new FontLoader();
     loader.load(
       FONT_PATH,
       (font: Font) => {
         if (this.disposed) return;
+        this.callbacks.onLoadProgress(0.35);
+
         const { group, letters } = createLetters(font);
         this.letters = letters;
         this.letterMeshes = getLetterMeshes(letters);
         this.scene.add(group);
+
+        animateLettersIntro(
+          letters,
+          this.flashLight,
+          (value) => {
+            this.callbacks.onLoadProgress(0.35 + value * 0.65);
+          },
+          () => {
+            this.callbacks.onLoadComplete();
+          },
+        );
       },
-      undefined,
+      (event) => {
+        if (event.lengthComputable) {
+          const ratio = event.loaded / event.total;
+          this.callbacks.onLoadProgress(0.05 + ratio * 0.25);
+        }
+      },
       (error) => {
         console.error('Font load failed:', FONT_PATH, error);
+        this.callbacks.onLoadComplete();
       },
     );
   }
@@ -192,8 +228,8 @@ export class TypoSceneController {
   private applyAmbientWave(): void {
     this.letters.forEach((letter) => {
       if (letter.isAnimating || letter.isHovered) return;
-      const wave = Math.sin(this.clock * 0.9 + letter.wavePhase) * 0.025;
-      letter.mesh.position.y = letter.basePosition.y + wave;
+      const wave = Math.sin(this.clock * 0.9 + letter.wavePhase) * 0.02;
+      letter.group.position.y = letter.basePosition.y + wave;
     });
   }
 
@@ -228,6 +264,7 @@ export class TypoSceneController {
       this.hoveredLetter = letter;
       animateLetterHover(letter, true);
       this.callbacks.onHoverChange(letter.char);
+      if (this.soundEnabled) playHoverSound();
       this.canvas.style.cursor = 'pointer';
       return;
     }
@@ -252,12 +289,17 @@ export class TypoSceneController {
   private readonly onClick = (): void => {
     if (!this.hoveredLetter) return;
     animateLetterClick(this.hoveredLetter);
+    if (this.soundEnabled) playClickSound();
     this.callbacks.onLetterClick(this.hoveredLetter.char);
   };
 
   private readonly onResize = (): void => {
     const { width, height } = getCanvasSize(this.canvas);
     if (width === 0 || height === 0) return;
+
+    this.cameraZ = getCameraDistance(width);
+    this.camera.position.z = this.cameraZ;
+    this.initialCameraPosition.z = this.cameraZ;
 
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
@@ -289,6 +331,10 @@ export class TypoSceneController {
     this.autoRotate = enabled;
   }
 
+  setSoundEnabled(enabled: boolean): void {
+    this.soundEnabled = enabled;
+  }
+
   resetCamera(): void {
     animateCameraReset(
       this.camera,
@@ -304,11 +350,7 @@ export class TypoSceneController {
     this.unbindEvents();
     this.controls.dispose();
     this.postProcessing.dispose();
-    this.letters.forEach((letter) => {
-      letter.hoverTween?.kill();
-      letter.mesh.geometry.dispose();
-      letter.material.dispose();
-    });
+    disposeLetters(this.letters);
     this.renderer.dispose();
   }
 }
