@@ -1,27 +1,11 @@
+<!-- TypoScape: корневой layout. Логика — src/app/useAppShell.ts -->
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
+import { useAppShell } from './app/useAppShell';
 import AppOverlay from './components/AppOverlay.vue';
 import LoadingOverlay from './components/LoadingOverlay.vue';
 import TypoScene from './components/TypoScene.vue';
-import { useSceneStore } from './stores/sceneStore';
 
-const store = useSceneStore();
-
-function handleKeydown(event: KeyboardEvent): void {
-  if (event.code === 'Space' && event.target === document.body) {
-    event.preventDefault();
-    store.toggleAutoRotate();
-  }
-}
-
-onMounted(() => {
-  store.setSceneReady(false);
-  window.addEventListener('keydown', handleKeydown);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown);
-});
+useAppShell();
 </script>
 
 <template>

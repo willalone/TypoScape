@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "build:pages": "GITHUB_PAGES=true npm run build && node scripts/verify-dist.mjs",
+    "verify-dist": "node scripts/verify-dist.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest run",
