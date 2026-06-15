@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
 export const useSceneStore = defineStore('scene', () => {
-  const autoRotate = ref(true);
+  const autoRotate = ref(false);
   const hoveredLetter = ref<string | null>(null);
   const resetCameraNonce = ref(0);
 

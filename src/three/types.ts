@@ -11,6 +11,7 @@ export interface LetterObject {
   hoverTween: { kill: () => void } | null;
   material: MeshPhysicalMaterial;
   wavePhase: number;
+  glassTint: number;
 }
 
 export interface SceneCallbacks {

@@ -3,7 +3,6 @@ import { Color } from 'three';
 import { COLORS, SCENE_CONFIG } from '../constants/config';
 import type { LetterObject } from './types';
 
-const baseColor = new Color(COLORS.letterBase);
 const hoverColor = new Color(COLORS.hoverAccent);
 const baseEmissive = new Color(COLORS.letterEmissive);
 const hoverEmissive = new Color(COLORS.hoverEmissive);
@@ -39,6 +38,7 @@ export function animateLetterHover(letter: LetterObject, isHovered: boolean): vo
   });
 
   const colorState = { t: isHovered ? 1 : 0 };
+  const baseColor = new Color(letter.glassTint);
   gsap.to(colorState, {
     t: isHovered ? 1 : 0,
     duration: 0.55,
@@ -48,7 +48,7 @@ export function animateLetterHover(letter: LetterObject, isHovered: boolean): vo
       const emissive = baseEmissive.clone().lerp(hoverEmissive, colorState.t);
       material.color.copy(fill);
       material.emissive.copy(emissive);
-      material.emissiveIntensity = 0.2 + colorState.t * 0.75;
+      material.emissiveIntensity = 0.12 + colorState.t * 0.65;
     },
   });
 
@@ -84,9 +84,9 @@ export function animateLetterClick(letter: LetterObject): void {
       mesh.position.copy(letter.basePosition);
       mesh.rotation.copy(letter.baseRotation);
       material.opacity = 1;
-      material.color.set(COLORS.letterBase);
+      material.color.set(letter.glassTint);
       material.emissive.set(COLORS.letterEmissive);
-      material.emissiveIntensity = 0.2;
+      material.emissiveIntensity = 0.12;
     },
   });
 

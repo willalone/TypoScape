@@ -52,7 +52,7 @@ export class TypoSceneController {
 
   private disposed = false;
 
-  private autoRotate = true;
+  private autoRotate = false;
 
   private readonly callbacks: SceneCallbacks;
 
@@ -66,7 +66,11 @@ export class TypoSceneController {
 
   private clock = 0;
 
-  private readonly initialCameraPosition = { x: 0, y: 1.2, z: SCENE_CONFIG.cameraZ };
+  private readonly initialCameraPosition = {
+    x: 0,
+    y: SCENE_CONFIG.cameraY,
+    z: SCENE_CONFIG.cameraZ,
+  };
 
   private readonly initialTarget = { x: 0, y: 0, z: 0 };
 
@@ -98,15 +102,17 @@ export class TypoSceneController {
     this.renderer.setSize(width, height, false);
     this.renderer.shadowMap.enabled = true;
     this.renderer.toneMapping = ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.08;
+    this.renderer.toneMappingExposure = 1.18;
 
     this.controls = new OrbitControls(this.camera, canvas);
     this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.05;
-    this.controls.minDistance = 6;
-    this.controls.maxDistance = 26;
-    this.controls.maxPolarAngle = Math.PI * 0.82;
-    this.controls.rotateSpeed = 0.5;
+    this.controls.dampingFactor = 0.085;
+    this.controls.minDistance = 7;
+    this.controls.maxDistance = 20;
+    this.controls.maxPolarAngle = Math.PI * 0.55;
+    this.controls.minPolarAngle = Math.PI * 0.38;
+    this.controls.rotateSpeed = 0.35;
+    this.controls.autoRotate = false;
 
     this.postProcessing = createPostProcessing(
       this.renderer,
@@ -148,9 +154,13 @@ export class TypoSceneController {
     warm.position.set(6, -1, -7);
     this.scene.add(warm);
 
-    const accent = new PointLight(COLORS.hoverAccent, 10, 22);
-    accent.position.set(0, 4, 9);
+    const accent = new PointLight(COLORS.neonCool, 14, 20);
+    accent.position.set(0, 2, 6);
     this.scene.add(accent);
+
+    const back = new PointLight(COLORS.neonWarm, 8, 18);
+    back.position.set(0, 1, -5);
+    this.scene.add(back);
   }
 
   private setupGrid(): void {
@@ -182,7 +192,7 @@ export class TypoSceneController {
   private applyAmbientWave(): void {
     this.letters.forEach((letter) => {
       if (letter.isAnimating || letter.isHovered) return;
-      const wave = Math.sin(this.clock * 1.1 + letter.wavePhase) * 0.06;
+      const wave = Math.sin(this.clock * 0.9 + letter.wavePhase) * 0.025;
       letter.mesh.position.y = letter.basePosition.y + wave;
     });
   }
