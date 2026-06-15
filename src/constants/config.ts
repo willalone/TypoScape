@@ -29,5 +29,5 @@ export const COLORS = {
   pointCool: 0x6088ff,
 } as const;
 
-/** Inter 700 — чистый гротеск, эталонная читаемость в SDF-рендере */
-export const FONT_URL = '/fonts/inter-700.woff';
+/** Inter 700 — путь через BASE_URL для корректной работы на GitHub Pages */
+export const FONT_URL = `${import.meta.env.BASE_URL}fonts/inter-700.woff`;
