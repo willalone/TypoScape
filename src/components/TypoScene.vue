@@ -2,8 +2,10 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useSceneStore } from '../stores/sceneStore';
 import type { TypoSceneController } from '../three/TypoSceneController';
+import WebGLFallback from './WebGLFallback.vue';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
+const initError = ref<string | null>(null);
 const store = useSceneStore();
 let controller: TypoSceneController | null = null;
 
@@ -18,20 +20,25 @@ onMounted(async () => {
   store.setSceneReady(false);
   store.setLoadProgress(0);
 
-  const { TypoSceneController } = await import('../three/TypoSceneController');
-
-  controller = new TypoSceneController(
-    canvasRef.value,
-    {
-      onHoverChange: (char) => store.setHoveredLetter(char),
-      onLetterClick: (char) => store.setClickedLetter(char),
-      onLoadProgress: (progress) => store.setLoadProgress(progress),
-      onLoadComplete: () => store.setSceneReady(true),
-    },
-    { soundEnabled: store.soundEnabled },
-  );
-
-  controller.setAutoRotate(store.autoRotate);
+  try {
+    const { TypoSceneController } = await import('../three/TypoSceneController');
+    controller = new TypoSceneController(
+      canvasRef.value,
+      {
+        onHoverChange: (char) => store.setHoveredLetter(char),
+        onLetterClick: (char) => store.setClickedLetter(char),
+        onLoadProgress: (progress) => store.setLoadProgress(progress),
+        onLoadComplete: () => store.setSceneReady(true),
+      },
+      { soundEnabled: store.soundEnabled },
+    );
+    controller.setAutoRotate(store.autoRotate);
+  } catch (error) {
+    console.error('TypoScene init failed:', error);
+    initError.value =
+      'Не удалось запустить 3D-сцену. Убедитесь, что WebGL включён и аппаратное ускорение активно.';
+    store.setSceneReady(true);
+  }
 });
 
 watch(
@@ -62,7 +69,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <WebGLFallback v-if="initError" :message="initError" />
   <canvas
+    v-else
     ref="canvasRef"
     class="scene-canvas"
     aria-label="Интерактивная 3D-сцена TypoScape"

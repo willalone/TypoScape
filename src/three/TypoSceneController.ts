@@ -16,6 +16,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import type { Font } from 'three/examples/jsm/loaders/FontLoader.js';
 import { COLORS, FONT_PATH, SCENE_CONFIG, getCameraDistance } from '../constants/config';
+import { createWebGLRenderer } from '../utils/webgl';
 import {
   animateCameraReset,
   animateLetterClick,
@@ -78,6 +79,10 @@ export class TypoSceneController {
 
   private useComposer = true;
 
+  private loadCompleted = false;
+
+  private loadTimeoutId = 0;
+
   private cameraZ: number;
 
   private readonly initialCameraPosition: { x: number; y: number; z: number };
@@ -112,12 +117,7 @@ export class TypoSceneController {
       this.initialCameraPosition.z,
     );
 
-    this.renderer = new WebGLRenderer({
-      canvas,
-      antialias: true,
-      alpha: false,
-      powerPreference: 'high-performance',
-    });
+    this.renderer = createWebGLRenderer(canvas);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
     this.renderer.setSize(width, height, false);
     this.renderer.shadowMap.enabled = true;
@@ -157,8 +157,33 @@ export class TypoSceneController {
     this.setupLights();
     this.setupGrid();
     this.bindEvents();
+    this.startLoadTimeout();
     this.loadLetters();
     this.animate();
+  }
+
+  private startLoadTimeout(): void {
+    this.loadTimeoutId = window.setTimeout(() => {
+      if (this.loadCompleted || this.disposed) return;
+      console.warn('TypoScape: load timeout — revealing scene');
+      this.revealLettersImmediately();
+      this.finishLoading();
+    }, 10000);
+  }
+
+  private revealLettersImmediately(): void {
+    this.letters.forEach((letter) => {
+      letter.group.visible = true;
+      letter.group.scale.setScalar(letter.baseScale);
+      letter.group.position.copy(letter.basePosition);
+    });
+  }
+
+  private finishLoading(): void {
+    if (this.loadCompleted || this.disposed) return;
+    this.loadCompleted = true;
+    window.clearTimeout(this.loadTimeoutId);
+    this.callbacks.onLoadComplete();
   }
 
   private setupLights(): void {
@@ -211,7 +236,7 @@ export class TypoSceneController {
               this.callbacks.onLoadProgress(0.35 + value * 0.65);
             },
             () => {
-              this.callbacks.onLoadComplete();
+              this.finishLoading();
             },
           );
         } catch (error) {
@@ -221,7 +246,7 @@ export class TypoSceneController {
             letter.group.scale.setScalar(letter.baseScale);
             letter.group.position.copy(letter.basePosition);
           });
-          this.callbacks.onLoadComplete();
+          this.finishLoading();
         }
       },
       (event) => {
@@ -232,7 +257,7 @@ export class TypoSceneController {
       },
       (error) => {
         console.error('Font load failed:', FONT_PATH, error);
-        this.callbacks.onLoadComplete();
+        this.finishLoading();
       },
     );
   }
@@ -372,6 +397,7 @@ export class TypoSceneController {
 
   dispose(): void {
     this.disposed = true;
+    window.clearTimeout(this.loadTimeoutId);
     cancelAnimationFrame(this.animationFrameId);
     this.unbindEvents();
     this.controls.dispose();

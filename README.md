@@ -8,13 +8,15 @@
 
 ![TypoScape preview](docs/preview.svg)
 
+> **Демо:** откройте ссылку в Chrome, Firefox или Safari с включённым JavaScript и WebGL. Если сцена не загрузилась — обновите страницу или проверьте аппаратное ускорение в настройках браузера.
+
 ## Дизайн-концепция
 
 **Идея:** типографика как физический объект в пространстве — не плоский текст, а материал со светом и весом.
 
 **Палитра:** глубокий индиго-чёрный фон (`#020408`) и янтарно-золотые буквы. Высокий контраст обеспечивает мгновенную читаемость слова TYPO.
 
-**Материал:** полупрозрачное стекло с тёплым emissive-свечением и тёмной обводкой. Каждая буква слегка отличается по оттенку, но воспринимается как единое слово.
+**Материал:** объёмные буквы с emissive-подсветкой и тёмной обводкой. Каждая буква слегка отличается по оттенку, но воспринимается как единое слово.
 
 **Движение:** буквы появляются по очереди (T → Y → P → O) с вспышкой света. Hover — пульсация и подъём. Click — сжатие, взлёт, вращение, мягкое приземление.
 
@@ -22,17 +24,36 @@
 
 ## Технологии
 
-Vue 3 · Three.js · TextGeometry · GSAP · Bloom · Pinia · Vite · Docker
+Vue 3 · TypeScript · Three.js · TextGeometry · GSAP · Bloom · Pinia · Vite · Docker
 
 ## Возможности
 
-- Объёмные 3D-буквы с обводкой и emissive-подсветкой
+- Объёмные 3D-буквы (TextGeometry) с обводкой и emissive-подсветкой
 - Поэтапная анимация загрузки + прогресс-бар
 - Hover / click с звуком (можно отключить)
 - Карточка с ролью буквы при клике
 - Адаптивная камера для мобильных
-- WebGL fallback
+- Graceful fallback при ошибке инициализации WebGL
 - Code splitting (Three.js, GSAP)
+
+## Структура проекта
+
+```
+src/
+├── App.vue                 — корневой layout
+├── components/
+│   ├── TypoScene.vue       — canvas + инициализация сцены
+│   ├── AppOverlay.vue      — UI, подсказки, звук
+│   ├── LoadingOverlay.vue  — прогресс загрузки
+│   └── WebGLFallback.vue   — экран ошибки WebGL
+├── three/
+│   ├── TypoSceneController.ts
+│   ├── createLetters.ts
+│   ├── animations.ts
+│   └── createPostProcessing.ts
+├── stores/sceneStore.ts
+└── constants/config.ts
+```
 
 ## Быстрый старт
 
@@ -49,7 +70,8 @@ docker compose up --build
 
 ## Деплой
 
-**Settings → Pages** → Source: **GitHub Actions** → push в `main`
+1. **Settings → Pages** → Source: **GitHub Actions**
+2. Push в `main` — CI соберёт и задеплоит `dist/`
 
 ## Лицензия
 
