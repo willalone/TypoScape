@@ -68,19 +68,11 @@ docker compose up --build
 
 ## Деплой на GitHub Pages
 
-**Одноразовая настройка в репозитории:**
+1. Откройте **Settings → Pages**: https://github.com/willalone/TypoScape/settings/pages
+2. В **Build and deployment → Source** выберите **GitHub Actions**
+3. Запушьте в `main` или запустите workflow вручную: **Actions → CI → Run workflow**
 
-1. Откройте https://github.com/willalone/TypoScape/settings/pages
-2. В разделе **Build and deployment** выберите **Source: GitHub Actions**
-3. Запушьте в `main` — workflow `CI` соберёт и задеплоит проект
-
-После успешного деплоя демо будет доступно по адресу:
-**https://willalone.github.io/TypoScape/**
-
-> Workflow использует `enablement: true` — Pages включается автоматически при первом деплое.
-> Если деплой упал, проверьте вкладку **Actions** и убедитесь, что в Settings → Pages выбран источник **GitHub Actions**.
-
-`base` в Vite переключается через `GITHUB_PAGES=true` (уже настроено в CI).
+Демо: **https://willalone.github.io/TypoScape/**
 
 ## Управление
 
