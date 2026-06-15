@@ -1,4 +1,4 @@
-import type { Mesh, Vector3, Euler } from 'three';
+import type { Euler, Mesh, MeshPhysicalMaterial, Vector3 } from 'three';
 
 export interface LetterObject {
   mesh: Mesh;
@@ -7,9 +7,17 @@ export interface LetterObject {
   baseRotation: Euler;
   baseScale: number;
   isAnimating: boolean;
+  isHovered: boolean;
+  hoverTween: { kill: () => void } | null;
+  material: MeshPhysicalMaterial;
+  wavePhase: number;
 }
 
 export interface SceneCallbacks {
   onHoverChange: (char: string | null) => void;
   onLetterClick: (char: string) => void;
+}
+
+export function getLetterMeshes(letters: LetterObject[]): Mesh[] {
+  return letters.map((letter) => letter.mesh);
 }

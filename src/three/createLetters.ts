@@ -13,17 +13,27 @@ import type { LetterObject } from './types';
 const ARC_RADIUS = 9;
 const ARC_SPAN = 0.55;
 
-function createLetterMaterial(): MeshPhysicalMaterial {
+const LETTER_TINTS = [0, 0.04, -0.03, 0.02];
+
+function createLetterMaterial(index: number): MeshPhysicalMaterial {
+  const base = new Color(COLORS.letterBase);
+  const tint = new Color(COLORS.letterTint);
+  base.lerp(tint, LETTER_TINTS[index] ?? 0);
+
   return new MeshPhysicalMaterial({
-    color: new Color(COLORS.letterBase),
+    color: base,
     emissive: new Color(COLORS.letterEmissive),
-    emissiveIntensity: 0.15,
-    metalness: 0.72,
-    roughness: 0.28,
-    clearcoat: 0.6,
-    clearcoatRoughness: 0.15,
-    reflectivity: 0.9,
+    emissiveIntensity: 0.2,
+    metalness: 0.82,
+    roughness: 0.18,
+    clearcoat: 1,
+    clearcoatRoughness: 0.08,
+    reflectivity: 1,
+    ior: 1.45,
+    transmission: 0.06,
+    thickness: 0.4,
     transparent: true,
+    envMapIntensity: 1.2,
   });
 }
 
@@ -32,11 +42,11 @@ function getLetterOffset(char: string, font: Font): number {
     font,
     size: SCENE_CONFIG.letterSize,
     depth: SCENE_CONFIG.letterDepth,
-    curveSegments: 12,
+    curveSegments: 10,
     bevelEnabled: true,
-    bevelThickness: 0.035,
-    bevelSize: 0.025,
-    bevelSegments: 4,
+    bevelThickness: 0.04,
+    bevelSize: 0.028,
+    bevelSegments: 3,
   });
   geometry.computeBoundingBox();
   const box = geometry.boundingBox ?? new Box3();
@@ -62,11 +72,11 @@ export function createLetters(font: Font): { group: Group; letters: LetterObject
       font,
       size: SCENE_CONFIG.letterSize,
       depth: SCENE_CONFIG.letterDepth,
-      curveSegments: 12,
+      curveSegments: 10,
       bevelEnabled: true,
-      bevelThickness: 0.035,
-      bevelSize: 0.025,
-      bevelSegments: 4,
+      bevelThickness: 0.04,
+      bevelSize: 0.028,
+      bevelSegments: 3,
     });
 
     geometry.computeBoundingBox();
@@ -74,7 +84,7 @@ export function createLetters(font: Font): { group: Group; letters: LetterObject
     const width = box.max.x - box.min.x;
     geometry.center();
 
-    const material = createLetterMaterial();
+    const material = createLetterMaterial(index);
     const mesh = new Mesh(geometry, material);
 
     const t = chars.length === 1 ? 0 : index / (chars.length - 1) - 0.5;
@@ -90,6 +100,9 @@ export function createLetters(font: Font): { group: Group; letters: LetterObject
     const baseRotation = mesh.rotation.clone();
     const baseScale = mesh.scale.x;
 
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+
     group.add(mesh);
     letters.push({
       mesh,
@@ -98,6 +111,10 @@ export function createLetters(font: Font): { group: Group; letters: LetterObject
       baseRotation,
       baseScale,
       isAnimating: false,
+      isHovered: false,
+      hoverTween: null,
+      material,
+      wavePhase: index * 0.85,
     });
 
     cursorX += width + SCENE_CONFIG.letterSpacing;

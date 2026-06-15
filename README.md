@@ -4,29 +4,24 @@
 
 **Live demo:** [https://willalone.github.io/TypoScape/](https://willalone.github.io/TypoScape/)
 
-Интерактивная 3D-типографика на Vue 3 и Three.js. Объёмные буквы **TYPO** с металлическим материалом: наведи курсор — подсветка, кликни — буква взлетает и возвращается.
+Интерактивная 3D-типографика — объёмные буквы **TYPO** в тёплой редакционной палитре с bloom, мерцающими частицами и многослойными анимациями.
 
 ![TypoScape preview](docs/preview.svg)
 
 ## Технологии
 
-| Инструмент | Назначение |
-|------------|------------|
-| Vue 3 + Composition API | UI и интеграция с canvas |
-| Three.js + TextGeometry | Объёмные 3D-буквы с фасками |
-| GSAP | Hover и click-анимации |
-| Pinia | Состояние сцены |
-| Vite | Сборка |
-| Docker + GitHub Actions | Деплой |
+Vue 3 · Three.js · TextGeometry · GSAP · Post-processing (bloom) · Pinia · Vite
 
 ## Возможности
 
-- Полноэкранная 3D-сцена с орбитальной камерой
-- Объёмные буквы (`TextGeometry` + `FontLoader`)
-- Hover: масштаб +18% и emissive-подсветка
-- Click: анимация взлёта с возвратом
-- Частицы и референсная сетка
-- Авто-вращение камеры (`Space` или кнопка)
+- Объёмные 3D-буквы с glass-metal материалом
+- Bloom и vignette
+- Анимированный градиентный фон и wireframe-кольца
+- Мерцающие частицы на кастомном шейдере
+- Волна по буквам в покое
+- Hover: масштаб, цвет, пульсация emissive, подъём по Z
+- Click: сжатие → взлёт → вращение → мягкое приземление
+- Орбитальная камера с авто-вращением
 
 ## Быстрый старт
 
@@ -35,39 +30,17 @@ npm install
 npm run dev
 ```
 
-Откройте [http://localhost:5173](http://localhost:5173).
-
 ### Docker
 
 ```bash
 docker compose up --build
 ```
 
-## Скрипты
+## Деплой
 
-| Команда | Описание |
-|---------|----------|
-| `npm run dev` | Локальная разработка |
-| `npm run build` | Production-сборка |
-| `npm run preview` | Просмотр сборки |
-| `npm run lint` | ESLint |
-| `npm run test` | Vitest |
-
-## Деплой на GitHub Pages
-
-1. **Settings → Pages** → Source: **GitHub Actions**
-2. Запушьте в `main`
+**Settings → Pages** → Source: **GitHub Actions** → push в `main`
 
 Демо: **https://willalone.github.io/TypoScape/**
-
-## Управление
-
-| Действие | Управление |
-|----------|------------|
-| Вращение камеры | ЛКМ + перетаскивание |
-| Приближение | Колёсико мыши |
-| Авто-вращение | `Space` или кнопка в UI |
-| Сброс камеры | Кнопка «Сбросить камеру» |
 
 ## Лицензия
 
