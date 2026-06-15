@@ -1,6 +1,6 @@
 import gsap from 'gsap';
 import { Color, type MeshPhysicalMaterial } from 'three';
-import { COLORS, SCENE_CONFIG } from '../constants/config';
+import { COLORS } from '../constants/config';
 import type { LetterObject } from './types';
 
 const HOVER_DURATION = 0.45;
@@ -14,12 +14,12 @@ export function animateLetterHover(
 
   const material = letter.mesh.material as MeshPhysicalMaterial;
   const targetScale = isHovered
-    ? letter.baseScale * SCENE_CONFIG.hoverScale
+    ? letter.baseScale * 1.18
     : letter.baseScale;
   const targetEmissive = new Color(
     isHovered ? COLORS.hoverEmissive : COLORS.letterEmissive,
   );
-  const targetIntensity = isHovered ? 0.85 : 0.18;
+  const targetIntensity = isHovered ? 0.85 : 0.15;
 
   gsap.to(letter.mesh.scale, {
     x: targetScale,
@@ -49,7 +49,6 @@ export function animateLetterClick(letter: LetterObject): void {
 
   letter.isAnimating = true;
   const material = letter.mesh.material as MeshPhysicalMaterial;
-
   const timeline = gsap.timeline({
     onComplete: () => {
       letter.isAnimating = false;
@@ -103,32 +102,4 @@ export function animateLetterClick(letter: LetterObject): void {
       },
       '<',
     );
-}
-
-export function animateCameraReset(
-  camera: { position: { x: number; y: number; z: number } },
-  controls: {
-    target: { x: number; y: number; z: number };
-    update: () => void;
-  },
-  initialPosition: { x: number; y: number; z: number },
-  initialTarget: { x: number; y: number; z: number },
-): void {
-  gsap.to(camera.position, {
-    x: initialPosition.x,
-    y: initialPosition.y,
-    z: initialPosition.z,
-    duration: 1.4,
-    ease: 'power3.inOut',
-    onUpdate: () => controls.update(),
-  });
-
-  gsap.to(controls.target, {
-    x: initialTarget.x,
-    y: initialTarget.y,
-    z: initialTarget.z,
-    duration: 1.4,
-    ease: 'power3.inOut',
-    onUpdate: () => controls.update(),
-  });
 }

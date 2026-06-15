@@ -51,12 +51,6 @@ const store = useSceneStore();
   pointer-events: none;
   color: #f2ece3;
   font-family: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
-  opacity: 0;
-  transition: opacity 1s cubic-bezier(0.22, 1, 0.36, 1) 0.4s;
-}
-
-:global(.app-shell:has(.scene-canvas--ready)) .overlay {
-  opacity: 1;
 }
 
 .overlay__brand {

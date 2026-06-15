@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
 import AppOverlay from './components/AppOverlay.vue';
-import LoadingOverlay from './components/LoadingOverlay.vue';
 import TypoScene from './components/TypoScene.vue';
-import WebGLFallback from './components/WebGLFallback.vue';
 import { useSceneStore } from './stores/sceneStore';
 
 const store = useSceneStore();
@@ -26,12 +24,8 @@ onUnmounted(() => {
 
 <template>
   <div class="app-shell">
-    <WebGLFallback v-if="!store.webglSupported" />
-    <template v-else>
-      <TypoScene />
-      <LoadingOverlay />
-      <AppOverlay />
-    </template>
+    <TypoScene />
+    <AppOverlay />
   </div>
 </template>
 

@@ -4,7 +4,7 @@
 
 **Live demo:** [https://willalone.github.io/TypoScape/](https://willalone.github.io/TypoScape/)
 
-Интерактивная 3D-типографика — портфолио-проект на Vue 3 и Three.js. Объёмные буквы **TYPO** с металлическим материалом, bloom и живым фоном: наведи курсор — подсветка, кликни — буква взлетает и возвращается.
+Интерактивная 3D-типографика на Vue 3 и Three.js. Объёмные буквы **TYPO** с металлическим материалом: наведи курсор — подсветка, кликни — буква взлетает и возвращается.
 
 ![TypoScape preview](docs/preview.svg)
 
@@ -12,29 +12,21 @@
 
 | Инструмент | Назначение |
 |------------|------------|
-| **Vue 3 + Composition API** | UI и интеграция с canvas |
-| **Three.js + TextGeometry** | Объёмные 3D-буквы с фасками |
-| **GSAP** | Hover и click-анимации |
-| **Post-processing** | Bloom, vignette, film grain |
-| **Pinia** | Состояние сцены и загрузки |
-| **Vite** | Сборка и dev-сервер |
-| **Docker + GitHub Actions** | Деплой |
-
-### Шрифт
-
-**Helvetiker Bold** — геометрический гротеск в духе швейцарской школы. В 3D с фасками даёт читаемый объём и выразительный силуэт.
+| Vue 3 + Composition API | UI и интеграция с canvas |
+| Three.js + TextGeometry | Объёмные 3D-буквы с фасками |
+| GSAP | Hover и click-анимации |
+| Pinia | Состояние сцены |
+| Vite | Сборка |
+| Docker + GitHub Actions | Деплой |
 
 ## Возможности
 
 - Полноэкранная 3D-сцена с орбитальной камерой
 - Объёмные буквы (`TextGeometry` + `FontLoader`)
-- Металлический `MeshPhysicalMaterial` с emissive-подсветкой
-- Post-processing: bloom, vignette, film grain
-- Анимированный градиентный фон и абстрактная геометрия
-- Экран загрузки с прогрессом
+- Hover: масштаб +18% и emissive-подсветка
+- Click: анимация взлёта с возвратом
+- Частицы и референсная сетка
 - Авто-вращение камеры (`Space` или кнопка)
-- Fallback только при реальной ошибке WebGL
-- Адаптивность от 1280×720 до 4K
 
 ## Быстрый старт
 
@@ -51,8 +43,6 @@ npm run dev
 docker compose up --build
 ```
 
-Приложение будет доступно на [http://localhost:8080](http://localhost:8080).
-
 ## Скрипты
 
 | Команда | Описание |
@@ -62,12 +52,11 @@ docker compose up --build
 | `npm run preview` | Просмотр сборки |
 | `npm run lint` | ESLint |
 | `npm run test` | Vitest |
-| `npm run format` | Prettier |
 
 ## Деплой на GitHub Pages
 
 1. **Settings → Pages** → Source: **GitHub Actions**
-2. Запушьте в `main` или запустите **Actions → CI → Run workflow**
+2. Запушьте в `main`
 
 Демо: **https://willalone.github.io/TypoScape/**
 
@@ -79,7 +68,6 @@ docker compose up --build
 | Приближение | Колёсико мыши |
 | Авто-вращение | `Space` или кнопка в UI |
 | Сброс камеры | Кнопка «Сбросить камеру» |
-| Интерактив с буквами | Наведение и клик |
 
 ## Лицензия
 

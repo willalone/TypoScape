@@ -10,23 +10,24 @@ import type { Font } from 'three/examples/jsm/loaders/FontLoader.js';
 import { COLORS, SCENE_CONFIG, WORD } from '../constants/config';
 import type { LetterObject } from './types';
 
+const ARC_RADIUS = 9;
 const ARC_SPAN = 0.55;
 
 function createLetterMaterial(): MeshPhysicalMaterial {
   return new MeshPhysicalMaterial({
     color: new Color(COLORS.letterBase),
     emissive: new Color(COLORS.letterEmissive),
-    emissiveIntensity: 0.18,
-    metalness: 0.78,
-    roughness: 0.22,
-    clearcoat: 0.85,
-    clearcoatRoughness: 0.12,
-    reflectivity: 1,
+    emissiveIntensity: 0.15,
+    metalness: 0.72,
+    roughness: 0.28,
+    clearcoat: 0.6,
+    clearcoatRoughness: 0.15,
+    reflectivity: 0.9,
     transparent: true,
   });
 }
 
-function measureCharWidth(char: string, font: Font): number {
+function getLetterOffset(char: string, font: Font): number {
   const geometry = new TextGeometry(char, {
     font,
     size: SCENE_CONFIG.letterSize,
@@ -49,7 +50,7 @@ export function createLetters(font: Font): { group: Group; letters: LetterObject
   const letters: LetterObject[] = [];
   const chars = WORD.split('');
 
-  const widths = chars.map((char) => measureCharWidth(char, font));
+  const widths = chars.map((char) => getLetterOffset(char, font));
   const totalWidth =
     widths.reduce((sum, width) => sum + width, 0) +
     SCENE_CONFIG.letterSpacing * (chars.length - 1);
@@ -80,7 +81,7 @@ export function createLetters(font: Font): { group: Group; letters: LetterObject
     const angle = t * ARC_SPAN;
     const x = cursorX + width / 2;
     const y = Math.cos(angle) * 0.35 - 0.2;
-    const z = Math.sin(angle) * 0.72;
+    const z = Math.sin(angle) * ARC_RADIUS * 0.08;
 
     mesh.position.set(x, y, z);
     mesh.rotation.set(-angle * 0.35, angle * 0.9, 0);
@@ -88,10 +89,6 @@ export function createLetters(font: Font): { group: Group; letters: LetterObject
     const basePosition = mesh.position.clone();
     const baseRotation = mesh.rotation.clone();
     const baseScale = mesh.scale.x;
-
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh.userData.baseScale = baseScale;
 
     group.add(mesh);
     letters.push({
@@ -110,14 +107,6 @@ export function createLetters(font: Font): { group: Group; letters: LetterObject
   return { group, letters };
 }
 
-export function disposeLetters(letters: LetterObject[]): void {
-  letters.forEach((letter) => {
-    letter.mesh.geometry.dispose();
-    const { material } = letter.mesh;
-    if (Array.isArray(material)) {
-      material.forEach((item) => item.dispose());
-    } else {
-      material.dispose();
-    }
-  });
+export function getLetterMeshes(letters: LetterObject[]): Mesh[] {
+  return letters.map((letter) => letter.mesh);
 }

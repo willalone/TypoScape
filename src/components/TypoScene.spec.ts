@@ -9,13 +9,15 @@ vi.mock('../three/TypoSceneController', () => {
   const resetCamera = vi.fn();
 
   return {
-    TypoSceneController: {
-      create: vi.fn(() => ({
-        setAutoRotate,
-        resetCamera,
-        dispose,
-      })),
-    },
+    TypoSceneController: vi.fn(
+      class TypoSceneControllerMock {
+        setAutoRotate = setAutoRotate;
+
+        resetCamera = resetCamera;
+
+        dispose = dispose;
+      },
+    ),
   };
 });
 
@@ -34,14 +36,17 @@ describe('TypoScene', () => {
 
     expect(wrapper.find('canvas.scene-canvas').exists()).toBe(true);
 
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => resolve());
+    });
+    await wrapper.vm.$nextTick();
+
     const { TypoSceneController } = await import('../three/TypoSceneController');
-    expect(TypoSceneController.create).toHaveBeenCalledTimes(1);
+    expect(TypoSceneController).toHaveBeenCalledTimes(1);
 
     wrapper.unmount();
 
-    const instance = vi.mocked(TypoSceneController.create).mock.results[0]?.value as {
-      dispose: ReturnType<typeof vi.fn>;
-    };
+    const instance = vi.mocked(TypoSceneController).mock.instances[0];
     expect(instance?.dispose).toHaveBeenCalledTimes(1);
   });
 });
