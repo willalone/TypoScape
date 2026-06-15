@@ -1,27 +1,33 @@
 export const WORD = 'TYPO' as const;
 
 export const SCENE_CONFIG = {
-  letterSize: 1.2,
-  letterDepth: 0.45,
-  letterSpacing: 1.55,
-  hoverScale: 1.18,
-  cameraFov: 45,
-  cameraZ: 14,
-  autoRotateSpeed: 0.35,
-  particleCount: 1200,
+  letterSize: 1.35,
+  letterSpacing: 0.18,
+  hoverScale: 1.12,
+  cameraFov: 42,
+  cameraZ: 11.5,
+  autoRotateSpeed: 0.22,
+  particleCount: 900,
+  bloomStrength: 0.52,
+  bloomRadius: 0.38,
+  bloomThreshold: 0.78,
 } as const;
 
 export const COLORS = {
-  background: 0x080b12,
-  letterBase: 0xd4cfc4,
-  letterEmissive: 0x1a1510,
-  hoverEmissive: 0xff5c3a,
+  background: 0x05070d,
+  backgroundAccent: 0x12182a,
+  letterFill: 0xf0ebe3,
+  letterOutline: 0x2a3040,
+  letterShadow: 0x1a1420,
+  hoverFill: 0xff6b45,
+  hoverOutline: 0xffb89a,
   accent: 0xe8a87c,
-  grid: 0x1e2433,
-  ambient: 0x404860,
-  directional: 0xfff4e8,
-  pointWarm: 0xff8a5c,
-  pointCool: 0x5c8aff,
+  grid: 0x1a2030,
+  ambient: 0x3a4560,
+  directional: 0xfff0e0,
+  pointWarm: 0xff7a50,
+  pointCool: 0x6088ff,
 } as const;
 
-export const FONT_PATH = '/fonts/helvetiker_bold.typeface.json';
+/** Inter 700 — чистый гротеск, эталонная читаемость в SDF-рендере */
+export const FONT_URL = '/fonts/inter-700.woff';

@@ -10,7 +10,7 @@ const store = useSceneStore();
       <p class="overlay__eyebrow">interactive typography</p>
       <h1 class="overlay__title">TypoScape</h1>
       <p class="overlay__desc">
-        Наведи на букву — она оживёт. Кликни — она взлетит.
+        Типографика как объект. Наведи — подсветка. Кликни — движение.
       </p>
     </div>
 
@@ -51,6 +51,12 @@ const store = useSceneStore();
   pointer-events: none;
   color: #f2ece3;
   font-family: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  opacity: 0;
+  transition: opacity 1s cubic-bezier(0.22, 1, 0.36, 1) 0.4s;
+}
+
+:global(.app-shell:has(.scene-canvas--ready)) .overlay {
+  opacity: 1;
 }
 
 .overlay__brand {

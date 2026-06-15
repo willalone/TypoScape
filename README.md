@@ -1,10 +1,10 @@
 # TypoScape
 
-[![CI](https://github.com/YOUR_USERNAME/TypoScape/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/TypoScape/actions/workflows/ci.yml)
+[![CI](https://github.com/willalone/TypoScape/actions/workflows/ci.yml/badge.svg)](https://github.com/willalone/TypoScape/actions/workflows/ci.yml)
 
-**Live demo:** [https://YOUR_USERNAME.github.io/TypoScape/](https://YOUR_USERNAME.github.io/TypoScape/)
+**Live demo:** [https://willalone.github.io/TypoScape/](https://willalone.github.io/TypoScape/)
 
-Интерактивная типографика в трёхмерном пространстве — портфолио-проект на Vue 3 и Three.js. Буквы слова **TYPO** живут в тёмной сцене с частицами и мягким светом: наводишь курсор — буква подсвечивается, кликаешь — она взлетает и возвращается.
+Интерактивная типографика в трёхмерном пространстве — портфолио-проект на Vue 3 и Three.js. Буквы слова **TYPO** живут в тёмной сцене с частицами, bloom и мягким светом: наводишь курсор — буква подсвечивается, кликаешь — она взлетает и возвращается.
 
 ![TypoScape preview](docs/preview.svg)
 
@@ -14,24 +14,27 @@
 |------------|-------|
 | **Vue 3 + Composition API** | Чистая интеграция UI и canvas без лишнего бойлерплейта |
 | **Three.js** | Полный контроль над 3D-сценой, светом и материалами |
+| **troika-three-text** | SDF-типографика: чёткие контуры, лёгкие меши, эталонная читаемость |
 | **GSAP** | Плавные hover/click-анимации без рывков |
-| **Pinia** | Состояние камеры и интерактивности в одном месте |
+| **Post-processing** | Bloom, vignette, film grain — визуальная глубина |
+| **Pinia** | Состояние камеры, загрузки и интерактивности |
 | **Vite** | Быстрая разработка и оптимизированная сборка |
 | **Docker** | Воспроизводимый деплой одной командой |
-| **Vitest** | Минимальный, но осмысленный тест жизненного цикла сцены |
+| **Vitest** | Тест жизненного цикла сцены |
 
 ### Шрифт
 
-Используется **Helvetiker Bold** — геометрический гротеск в духе швейцарской школы типографики. В 3D он читается чётко, хорошо держит фаски (`bevel`) и не перегружает сцену декоративностью. Для арт-объекта важна ясность формы, а не орнамент.
+**Inter 700** — современный неогротеск с открытыми формами. В связке с `troika-three-text` (SDF-рендеринг) даёт печатное качество на любом расстоянии камеры — без «грязных» мешей `TextGeometry`.
 
 ## Возможности
 
 - Полноэкранная 3D-сцена с орбитальной камерой
-- Буквы из `TextGeometry` + `FontLoader`
-- Hover: масштаб + emissive-подсветка
-- Click: анимация «взлёта» с возвратом
-- Авто-вращение камеры (переключение клавишей `Space` или кнопкой)
-- Частицы и сетка как референс глубины
+- SDF-буквы через `troika-three-text`
+- Post-processing: bloom, vignette, film grain
+- Hover: масштаб + цветовая подсветка
+- Click: плавная анимация «взлёта» с возвратом
+- Экран загрузки с прогрессом
+- Авто-вращение камеры (`Space` или кнопка)
 - Fallback для браузеров без WebGL
 - Адаптивность от 1280×720 до 4K
 
@@ -65,11 +68,10 @@ docker compose up --build
 
 ## Деплой на GitHub Pages
 
-1. Замените `YOUR_USERNAME` в README и workflow на свой GitHub-логин.
-2. В настройках репозитория включите **Pages → Source: GitHub Actions**.
-3. Запушьте в `main` — CI соберёт и задеплоит проект.
+1. В настройках репозитория включите **Pages → Source: GitHub Actions**.
+2. Запушьте в `main` — CI соберёт и задеплоит проект.
 
-`base` в Vite автоматически переключается через `GITHUB_PAGES=true`.
+`base` в Vite переключается через `GITHUB_PAGES=true` (уже настроено в CI).
 
 ## Управление
 
@@ -84,10 +86,9 @@ docker compose up --build
 ## Возможные улучшения
 
 - Загрузка пользовательского слова через UI
-- Post-processing (bloom, film grain)
+- Chromatic aberration и motion blur
 - Звуковое сопровождение с кнопкой mute
 - Переключение светлой/тёмной палитры
-- Конвертация кастомного шрифта (Inter, Montserrat) через [facetype.js](http://gero3.github.io/facetype.js/)
 
 ## Лицензия
 
