@@ -1,85 +1,74 @@
 import {
   Box3,
-  AdditiveBlending,
   Color,
   Group,
   Mesh,
-  MeshBasicMaterial,
   MeshPhysicalMaterial,
+  Vector2,
+  type BufferGeometry,
 } from 'three';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import type { Font } from 'three/examples/jsm/loaders/FontLoader.js';
 import { COLORS, LETTER_TINTS, SCENE_CONFIG, WORD } from '../constants/config';
 import type { LetterObject } from './types';
+import type { MetalTextureSet } from './createMetalTextures';
 
 const GEO_OPTIONS = {
   size: SCENE_CONFIG.letterSize,
   depth: SCENE_CONFIG.letterDepth,
-  curveSegments: 6,
+  curveSegments: 8,
   bevelEnabled: true,
-  bevelThickness: 0.024,
-  bevelSize: 0.018,
-  bevelSegments: 3,
+  bevelThickness: 0.026,
+  bevelSize: 0.02,
+  bevelSegments: 4,
 } as const;
 
-function createLetterMaterial(tintHex: number): MeshPhysicalMaterial {
-  const tint = new Color(tintHex);
+function createLetterMaterial(metalTextures: MetalTextureSet): MeshPhysicalMaterial {
   return new MeshPhysicalMaterial({
-    color: tint,
-    emissive: tint,
+    map: metalTextures.map,
+    roughnessMap: metalTextures.roughnessMap,
+    normalMap: metalTextures.normalMap,
+    metalnessMap: metalTextures.metalnessMap,
+    normalScale: new Vector2(0.85, 0.85),
+    color: new Color(0xd4b060),
+    emissive: new Color(0x000000),
     emissiveIntensity: SCENE_CONFIG.letterEmissiveIntensity,
-    metalness: 0.42,
-    roughness: 0.14,
-    clearcoat: 1,
-    clearcoatRoughness: 0.06,
-    reflectivity: 0.9,
+    metalness: 1,
+    roughness: 0.44,
+    clearcoat: 0.28,
+    clearcoatRoughness: 0.32,
     envMapIntensity: SCENE_CONFIG.letterEnvIntensity,
-    sheen: 0.35,
-    sheenRoughness: 0.28,
-    sheenColor: new Color(0xfff8e8),
+    anisotropy: 0.85,
+    anisotropyRotation: Math.PI * 0.5,
     fog: false,
   });
 }
 
-function createHaloMaterial(): MeshBasicMaterial {
-  return new MeshBasicMaterial({
-    color: new Color(COLORS.letterHalo),
-    transparent: true,
-    opacity: 0.55,
-    depthWrite: false,
-    fog: false,
-    blending: AdditiveBlending,
-  });
+function prepareGeometry(geometry: BufferGeometry): void {
+  geometry.computeBoundingBox();
+  geometry.computeVertexNormals();
+  geometry.computeTangents();
 }
 
-function createStrokeMaterial(): MeshBasicMaterial {
-  return new MeshBasicMaterial({
-    color: new Color(COLORS.letterStroke),
-    fog: false,
-  });
-}
-
-function createSheenMaterial(): MeshBasicMaterial {
-  return new MeshBasicMaterial({
-    color: new Color(0xfffef8),
-    transparent: true,
-    opacity: 0.22,
-    depthWrite: false,
-    fog: false,
-    blending: AdditiveBlending,
-  });
+function buildCharGeometry(char: string, font: Font): BufferGeometry {
+  const geometry = new TextGeometry(char, { font, ...GEO_OPTIONS });
+  prepareGeometry(geometry);
+  geometry.center();
+  return geometry;
 }
 
 function measureChar(char: string, font: Font): number {
-  const geometry = new TextGeometry(char, { font, ...GEO_OPTIONS });
-  geometry.computeBoundingBox();
+  const geometry = buildCharGeometry(char, font);
   const box = geometry.boundingBox ?? new Box3();
   const width = box.max.x - box.min.x;
   geometry.dispose();
   return width;
 }
 
-export function createLetters(font: Font): {
+export function createLetters(
+  font: Font,
+  metalTextures: MetalTextureSet,
+): {
   group: Group;
   letters: LetterObject[];
 } {
@@ -95,46 +84,22 @@ export function createLetters(font: Font): {
   let cursorX = -totalWidth / 2;
 
   chars.forEach((char, index) => {
-    const geometry = new TextGeometry(char, { font, ...GEO_OPTIONS });
-    geometry.computeBoundingBox();
-    const box = geometry.boundingBox ?? new Box3();
+    const source = buildCharGeometry(char, font);
+    const box = source.boundingBox ?? new Box3();
     const width = box.max.x - box.min.x;
-    geometry.center();
 
-    const tint = LETTER_TINTS[index] ?? COLORS.letterGlass;
-    const material = createLetterMaterial(tint);
-    const haloMaterial = createHaloMaterial();
-    const strokeMaterial = createStrokeMaterial();
-    const sheenMaterial = createSheenMaterial();
+    const material = createLetterMaterial(metalTextures);
+    const mesh = new Mesh(source.clone(), material);
 
     const letterGroup = new Group();
-    const haloMesh = new Mesh(geometry, haloMaterial);
-    haloMesh.scale.setScalar(SCENE_CONFIG.letterHaloScale);
-    haloMesh.renderOrder = 0;
-
-    const strokeMesh = new Mesh(geometry, strokeMaterial);
-    strokeMesh.scale.setScalar(SCENE_CONFIG.letterStrokeScale);
-    strokeMesh.renderOrder = 1;
-
-    const mesh = new Mesh(geometry, material);
-    mesh.renderOrder = 2;
-
-    const sheenMesh = new Mesh(geometry, sheenMaterial);
-    sheenMesh.scale.setScalar(SCENE_CONFIG.letterSheenScale);
-    sheenMesh.renderOrder = 3;
-
     const x = cursorX + width / 2;
     letterGroup.position.set(x, 0, 0);
-
-    letterGroup.add(haloMesh, strokeMesh, mesh, sheenMesh);
+    letterGroup.add(mesh);
 
     group.add(letterGroup);
     letters.push({
       group: letterGroup,
       mesh,
-      haloMesh,
-      strokeMesh,
-      sheenMesh,
       char,
       basePosition: letterGroup.position.clone(),
       baseRotation: letterGroup.rotation.clone(),
@@ -143,13 +108,11 @@ export function createLetters(font: Font): {
       isHovered: false,
       hoverTween: null,
       material,
-      haloMaterial,
-      strokeMaterial,
-      sheenMaterial,
       wavePhase: index * 0.6,
-      glassTint: tint,
+      glassTint: LETTER_TINTS[index] ?? COLORS.letterGlass,
     });
 
+    source.dispose();
     cursorX += width + SCENE_CONFIG.letterSpacing;
   });
 
@@ -161,16 +124,14 @@ export function getLetterMeshes(letters: LetterObject[]): Mesh[] {
 }
 
 export function disposeLetters(letters: LetterObject[]): void {
-  const disposed = new Set<import('three').BufferGeometry>();
+  const disposed = new Set<BufferGeometry>();
   letters.forEach((letter) => {
     letter.hoverTween?.kill();
-    if (!disposed.has(letter.mesh.geometry)) {
-      letter.mesh.geometry.dispose();
-      disposed.add(letter.mesh.geometry);
+    const geo = letter.mesh.geometry;
+    if (!disposed.has(geo)) {
+      geo.dispose();
+      disposed.add(geo);
     }
     letter.material.dispose();
-    letter.haloMaterial.dispose();
-    letter.strokeMaterial.dispose();
-    letter.sheenMaterial.dispose();
   });
 }

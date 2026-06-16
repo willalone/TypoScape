@@ -1,26 +1,26 @@
 import gsap from 'gsap';
 import { Color } from 'three';
 import type { PointLight } from 'three';
-import { COLORS, SCENE_CONFIG } from '../constants/config';
+import { SCENE_CONFIG } from '../constants/config';
 import { playIntroSound } from '../utils/sound';
 import type { LetterObject } from './types';
 
-const hoverColor = new Color(COLORS.hoverAccent);
-const baseEmissive = new Color(COLORS.letterEmissive);
-const hoverEmissive = new Color(COLORS.hoverEmissive);
-const haloBaseOpacity = 0.55;
-const sheenBaseOpacity = 0.22;
+const hoverEmissive = new Color(0x2a1a08);
+const baseMaterialEmissive = new Color(0x000000);
+const baseMaterialColor = new Color(0xd4b060);
+
+function killHoverTweens(letter: LetterObject): void {
+  gsap.killTweensOf(letter.group);
+  gsap.killTweensOf(letter.group.scale);
+  gsap.killTweensOf(letter.group.position);
+  gsap.killTweensOf(letter.material);
+  gsap.killTweensOf(letter.material.color);
+  gsap.killTweensOf(letter.material.emissive);
+}
 
 function stopHoverPulse(letter: LetterObject): void {
   letter.hoverTween?.kill();
   letter.hoverTween = null;
-}
-
-function animateGroup(
-  letter: LetterObject,
-  props: gsap.TweenVars,
-): gsap.core.Tween {
-  return gsap.to(letter.group, props);
 }
 
 export function animateLetterHover(letter: LetterObject, isHovered: boolean): void {
@@ -28,69 +28,62 @@ export function animateLetterHover(letter: LetterObject, isHovered: boolean): vo
 
   letter.isHovered = isHovered;
   stopHoverPulse(letter);
+  killHoverTweens(letter);
 
-  const { material, haloMaterial, sheenMaterial } = letter;
+  const { material } = letter;
+  const duration = isHovered
+    ? SCENE_CONFIG.hoverDurationIn
+    : SCENE_CONFIG.hoverDurationOut;
+  const ease = isHovered ? 'power3.out' : 'power2.out';
   const targetScale = isHovered
     ? letter.baseScale * SCENE_CONFIG.hoverScale
     : letter.baseScale;
 
-  animateGroup(letter, {
-    scale: targetScale,
-    duration: 0.5,
-    ease: 'power3.out',
+  gsap.to(letter.group.scale, {
+    x: targetScale,
+    y: targetScale,
+    z: targetScale,
+    duration,
+    ease,
+    overwrite: 'auto',
   });
 
   gsap.to(letter.group.position, {
-    z: letter.basePosition.z + (isHovered ? 0.22 : 0),
-    duration: 0.55,
-    ease: 'power3.out',
+    z: letter.basePosition.z + (isHovered ? SCENE_CONFIG.hoverLiftZ : 0),
+    duration,
+    ease,
+    overwrite: 'auto',
   });
 
-  gsap.to(haloMaterial, {
-    opacity: isHovered ? 0.82 : haloBaseOpacity,
-    duration: 0.5,
-    ease: 'power2.out',
+  gsap.to(material.color, {
+    r: isHovered ? 0.92 : baseMaterialColor.r,
+    g: isHovered ? 0.82 : baseMaterialColor.g,
+    b: isHovered ? 0.48 : baseMaterialColor.b,
+    duration,
+    ease,
+    overwrite: 'auto',
   });
 
-  gsap.to(sheenMaterial, {
-    opacity: isHovered ? 0.42 : sheenBaseOpacity,
-    duration: 0.5,
-    ease: 'power2.out',
+  gsap.to(material.emissive, {
+    r: isHovered ? hoverEmissive.r : baseMaterialEmissive.r,
+    g: isHovered ? hoverEmissive.g : baseMaterialEmissive.g,
+    b: isHovered ? hoverEmissive.b : baseMaterialEmissive.b,
+    duration,
+    ease,
+    overwrite: 'auto',
   });
 
-  const baseColor = new Color(letter.glassTint);
-  const colorState = { t: isHovered ? 1 : 0 };
-  gsap.to(colorState, {
-    t: isHovered ? 1 : 0,
-    duration: 0.55,
-    ease: 'power2.out',
-    onUpdate: () => {
-      const fill = baseColor.clone().lerp(hoverColor, colorState.t);
-      const emissive = baseEmissive.clone().lerp(hoverEmissive, colorState.t);
-      material.color.copy(fill);
-      material.emissive.copy(emissive);
-      material.emissiveIntensity =
-        SCENE_CONFIG.letterEmissiveIntensity + colorState.t * 0.5;
-      material.envMapIntensity =
-        SCENE_CONFIG.letterEnvIntensity + colorState.t * 0.45;
-    },
+  gsap.to(material, {
+    emissiveIntensity: isHovered ? 0.04 : SCENE_CONFIG.letterEmissiveIntensity,
+    envMapIntensity: isHovered
+      ? SCENE_CONFIG.letterEnvIntensity + 0.2
+      : SCENE_CONFIG.letterEnvIntensity,
+    metalness: 1,
+    roughness: isHovered ? 0.36 : 0.44,
+    duration,
+    ease,
+    overwrite: 'auto',
   });
-
-  if (isHovered) {
-    const pulse = { intensity: material.emissiveIntensity };
-    letter.hoverTween = gsap.to(pulse, {
-      intensity: material.emissiveIntensity + 0.28,
-      duration: 0.85,
-      yoyo: true,
-      repeat: -1,
-      ease: 'sine.inOut',
-      onUpdate: () => {
-        if (letter.isHovered) {
-          material.emissiveIntensity = pulse.intensity;
-        }
-      },
-    });
-  }
 }
 
 export function animateLetterClick(
@@ -102,187 +95,112 @@ export function animateLetterClick(
   letter.isAnimating = true;
   letter.isHovered = false;
   stopHoverPulse(letter);
+  killHoverTweens(letter);
 
-  const { material, haloMaterial, sheenMaterial, haloMesh, group } = letter;
-  const haloBaseScale = SCENE_CONFIG.letterHaloScale;
+  const { material, group } = letter;
+  const s = letter.baseScale;
+  const baseY = letter.basePosition.y;
+  const baseX = letter.basePosition.x;
+  const baseZ = letter.basePosition.z;
+  const rot = letter.baseRotation;
+  const jumpHeight = 2.1;
+
+  group.scale.set(s, s, s);
+  group.rotation.copy(rot);
 
   if (flashLight) {
     gsap.timeline()
-      .to(flashLight, {
-        intensity: 32,
-        duration: 0.08,
-        ease: 'power4.out',
-      })
-      .to(flashLight, {
-        intensity: 8,
-        duration: 0.35,
-        ease: 'power3.inOut',
-      })
-      .to(flashLight, {
-        intensity: 18,
-        duration: 0.12,
-        ease: 'power2.out',
-      })
-      .to(flashLight, {
-        intensity: 6,
-        duration: 0.5,
-        ease: 'power2.inOut',
-      });
+      .to(flashLight, { intensity: 10, duration: 0.06, ease: 'power4.out' })
+      .to(flashLight, { intensity: 3, duration: 0.25, ease: 'power3.inOut' })
+      .to(flashLight, { intensity: 0, duration: 0.35, ease: 'power2.inOut' });
   }
 
   const timeline = gsap.timeline({
     onComplete: () => {
       letter.isAnimating = false;
-      group.scale.setScalar(letter.baseScale);
-      group.position.copy(letter.basePosition);
-      group.rotation.copy(letter.baseRotation);
-      haloMesh.scale.setScalar(haloBaseScale);
-      material.color.set(letter.glassTint);
-      material.emissive.set(COLORS.letterEmissive);
+      group.scale.set(s, s, s);
+      group.position.set(baseX, baseY, baseZ);
+      group.rotation.copy(rot);
+      material.color.copy(baseMaterialColor);
+      material.emissive.copy(baseMaterialEmissive);
       material.emissiveIntensity = SCENE_CONFIG.letterEmissiveIntensity;
       material.envMapIntensity = SCENE_CONFIG.letterEnvIntensity;
-      material.metalness = 0.42;
-      haloMaterial.opacity = haloBaseOpacity;
-      sheenMaterial.opacity = sheenBaseOpacity;
+      material.metalness = 1;
+      material.roughness = 0.44;
     },
   });
 
   timeline
-    .to(group.scale, {
-      x: letter.baseScale * 1.12,
-      y: letter.baseScale * 0.82,
-      z: letter.baseScale * 1.08,
-      duration: 0.12,
+    .to(group.position, {
+      y: baseY - 0.05,
+      duration: 0.07,
       ease: 'power2.in',
     })
-    .to(group.scale, {
-      x: letter.baseScale * 0.92,
-      y: letter.baseScale * 1.16,
-      z: letter.baseScale * 0.92,
-      duration: 0.1,
+    .to(group.position, {
+      y: baseY + jumpHeight,
+      z: baseZ + 0.18,
+      duration: 0.44,
       ease: 'power2.out',
     })
     .to(
-      group.position,
-      {
-        y: letter.basePosition.y + 3.2,
-        z: letter.basePosition.z + 0.65,
-        duration: 0.55,
-        ease: 'power4.out',
-      },
-      '-=0.02',
-    )
-    .to(
-      group.rotation,
-      {
-        x: letter.baseRotation.x - 0.35,
-        z: letter.baseRotation.z + Math.PI * 0.55,
-        duration: 0.55,
-        ease: 'power3.out',
-      },
-      '<',
-    )
-    .to(
       material,
       {
-        emissiveIntensity: 1.35,
-        metalness: 0.72,
-        envMapIntensity: 2.1,
-        duration: 0.22,
-        ease: 'sine.inOut',
-      },
-      '<20%',
-    )
-    .to(
-      haloMaterial,
-      {
-        opacity: 1,
+        envMapIntensity: SCENE_CONFIG.letterEnvIntensity + 0.15,
+        roughness: 0.36,
         duration: 0.18,
-        ease: 'power2.out',
+        ease: 'sine.out',
       },
-      '<',
-    )
-    .to(
-      sheenMaterial,
-      {
-        opacity: 0.75,
-        duration: 0.18,
-        ease: 'power2.out',
-      },
-      '<',
-    )
-    .to(
-      haloMesh.scale,
-      {
-        x: haloBaseScale * 1.22,
-        y: haloBaseScale * 1.22,
-        z: haloBaseScale * 1.22,
-        duration: 0.28,
-        ease: 'power2.out',
-      },
-      '<',
+      '<35%',
     )
     .to(group.position, {
-      x: letter.basePosition.x,
-      y: letter.basePosition.y,
-      z: letter.basePosition.z,
-      duration: 0.68,
-      ease: 'power4.inOut',
+      y: baseY + jumpHeight + 0.08,
+      duration: 0.07,
+      ease: 'sine.inOut',
     })
-    .to(
-      group.rotation,
-      {
-        x: letter.baseRotation.x,
-        y: letter.baseRotation.y,
-        z: letter.baseRotation.z,
-        duration: 0.68,
-        ease: 'power4.inOut',
-      },
-      '<',
-    )
-    .to(group.scale, {
-      x: letter.baseScale,
-      y: letter.baseScale,
-      z: letter.baseScale,
-      duration: 0.4,
-      ease: 'elastic.out(1, 0.5)',
+    .to(group.position, {
+      y: baseY,
+      z: baseZ,
+      duration: 0.34,
+      ease: 'power2.in',
+    })
+    .to(group.position, {
+      y: baseY + 0.38,
+      duration: 0.17,
+      ease: 'power2.out',
+    })
+    .to(group.position, {
+      y: baseY,
+      duration: 0.14,
+      ease: 'power2.in',
+    })
+    .to(group.position, {
+      y: baseY + 0.14,
+      duration: 0.11,
+      ease: 'power2.out',
+    })
+    .to(group.position, {
+      y: baseY,
+      duration: 0.09,
+      ease: 'power2.in',
+    })
+    .to(group.position, {
+      y: baseY + 0.04,
+      duration: 0.08,
+      ease: 'power2.out',
+    })
+    .to(group.position, {
+      y: baseY,
+      x: baseX,
+      z: baseZ,
+      duration: 0.07,
+      ease: 'power2.in',
     })
     .to(
       material,
       {
-        emissiveIntensity: 0.95,
-        metalness: 0.42,
         envMapIntensity: SCENE_CONFIG.letterEnvIntensity,
-        duration: 0.35,
-        ease: 'power2.out',
-      },
-      '<15%',
-    )
-    .to(
-      haloMesh.scale,
-      {
-        x: haloBaseScale,
-        y: haloBaseScale,
-        z: haloBaseScale,
-        duration: 0.45,
-        ease: 'elastic.out(1, 0.65)',
-      },
-      '<',
-    )
-    .to(
-      haloMaterial,
-      {
-        opacity: haloBaseOpacity,
-        duration: 0.45,
-        ease: 'power2.out',
-      },
-      '<',
-    )
-    .to(
-      sheenMaterial,
-      {
-        opacity: sheenBaseOpacity,
-        duration: 0.45,
+        roughness: 0.44,
+        duration: 0.25,
         ease: 'power2.out',
       },
       '<',
@@ -353,14 +271,14 @@ export function animateLettersIntro(
   timeline.to(
     flashLight,
     {
-      intensity: 28,
+      intensity: 9,
       duration: 0.15,
       ease: 'power2.out',
     },
     '-=0.2',
   );
   timeline.to(flashLight, {
-    intensity: 6,
+    intensity: 0,
     duration: 0.8,
     ease: 'power3.inOut',
   });

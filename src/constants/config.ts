@@ -4,22 +4,22 @@ export const SCENE_CONFIG = {
   letterSize: 1.15,
   letterDepth: 0.3,
   letterSpacing: 1.42,
-  hoverScale: 1.1,
+  hoverScale: 1.06,
+  hoverDurationIn: 0.11,
+  hoverDurationOut: 0.18,
+  hoverLiftZ: 0.14,
   cameraFov: 36,
   cameraZ: 9.8,
   cameraZMobile: 11.5,
   cameraY: 0.1,
   autoRotateSpeed: 0.12,
   particleCount: 1200,
-  bloomStrength: 0.38,
-  bloomRadius: 0.42,
-  bloomThreshold: 0.78,
+  bloomStrength: 0.2,
+  bloomRadius: 0.32,
+  bloomThreshold: 0.94,
   introStagger: 0.2,
-  letterEmissiveIntensity: 0.68,
-  letterEnvIntensity: 1.35,
-  letterHaloScale: 1.09,
-  letterStrokeScale: 1.03,
-  letterSheenScale: 0.994,
+  letterEmissiveIntensity: 0,
+  letterEnvIntensity: 1.25,
 } as const;
 
 export const COLORS = {
@@ -43,12 +43,12 @@ export const COLORS = {
   ring: 0xffb060,
 } as const;
 
-/** Янтарные оттенки — высокий контраст на тёмном фоне */
+/** Единый золотой оттенок — все буквы выглядят одинаково */
 export const LETTER_TINTS = [
-  0xfff4d8,
-  0xffe8b0,
-  0xffdc90,
-  0xfff8e8,
+  0xe8c878,
+  0xe8c878,
+  0xe8c878,
+  0xe8c878,
 ] as const;
 
 export const FONT_PATH = `${import.meta.env.BASE_URL}fonts/helvetiker_bold.typeface.json`;

@@ -27,6 +27,7 @@ import {
 } from './animations';
 import { createEnvironment } from './createEnvironment';
 import { createLetters, disposeLetters, getLetterMeshes } from './createLetters';
+import { createBrushedMetalTextures, type MetalTextureSet } from './createMetalTextures';
 import { createParticleField } from './createParticles';
 import { createPostProcessing } from './createPostProcessing';
 import type { LetterObject, SceneCallbacks } from './types';
@@ -77,6 +78,8 @@ export class TypoSceneController {
 
   private readonly flashLight: PointLight;
 
+  private readonly metalTextures: MetalTextureSet;
+
   private clock = 0;
 
   private useComposer = true;
@@ -124,16 +127,18 @@ export class TypoSceneController {
     this.renderer.setSize(width, height, false);
     this.renderer.shadowMap.enabled = true;
     this.renderer.toneMapping = ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.28;
+    this.renderer.toneMappingExposure = 0.98;
 
     const pmrem = new PMREMGenerator(this.renderer);
     pmrem.compileEquirectangularShader();
-    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.045).texture;
     pmrem.dispose();
+
+    this.metalTextures = createBrushedMetalTextures();
 
     this.controls = new OrbitControls(this.camera, canvas);
     this.controls.enableDamping = true;
-    this.controls.dampingFactor = 0.085;
+    this.controls.dampingFactor = 0.06;
     this.controls.minDistance = 7;
     this.controls.maxDistance = 20;
     this.controls.maxPolarAngle = Math.PI * 0.52;
@@ -200,33 +205,33 @@ export class TypoSceneController {
   }
 
   private setupLights(): void {
-    this.scene.add(new AmbientLight(COLORS.ambient, 0.65));
+    this.scene.add(new AmbientLight(COLORS.ambient, 0.42));
 
-    const key = new DirectionalLight(COLORS.directional, 1.35);
+    const key = new DirectionalLight(COLORS.directional, 0.95);
     key.position.set(4, 10, 8);
     this.scene.add(key);
 
-    const spec = new DirectionalLight(0xffffff, 1.1);
+    const spec = new DirectionalLight(0xffffff, 0.75);
     spec.position.set(-2, 6, 10);
     this.scene.add(spec);
 
-    const fill = new DirectionalLight(0xfff4e0, 2.2);
+    const fill = new DirectionalLight(0xfff4e0, 1.15);
     fill.position.set(0, 1.5, 12);
     this.scene.add(fill);
 
-    const rim = new DirectionalLight(COLORS.neonWarm, 0.85);
+    const rim = new DirectionalLight(COLORS.neonWarm, 0.45);
     rim.position.set(0, -2, -8);
     this.scene.add(rim);
 
-    const cool = new PointLight(COLORS.pointCool, 14, 40);
+    const cool = new PointLight(COLORS.pointCool, 6, 40);
     cool.position.set(-6, 3, 5);
     this.scene.add(cool);
 
-    const warm = new PointLight(COLORS.pointWarm, 12, 36);
+    const warm = new PointLight(COLORS.pointWarm, 5, 36);
     warm.position.set(6, 0, -6);
     this.scene.add(warm);
 
-    const front = new PointLight(COLORS.neonWarm, 24, 28);
+    const front = new PointLight(COLORS.neonWarm, 7, 28);
     front.position.set(0, 0.5, 9);
     this.scene.add(front);
   }
@@ -248,7 +253,7 @@ export class TypoSceneController {
         if (this.disposed) return;
         this.callbacks.onLoadProgress(0.35);
 
-        const { group, letters } = createLetters(font);
+        const { group, letters } = createLetters(font, this.metalTextures);
         this.letters = letters;
         this.letterMeshes = getLetterMeshes(letters);
         this.scene.add(group);
@@ -318,8 +323,9 @@ export class TypoSceneController {
 
     this.raycaster.setFromCamera(this.pointer, this.camera);
     const hits = this.raycaster.intersectObjects(this.letterMeshes, false);
-    const hit = hits[0]?.object;
-    const letter = this.letters.find((item) => item.mesh === hit) ?? null;
+    const hitMesh = hits[0]?.object;
+    const letter =
+      this.letters.find((item) => item.mesh === hitMesh) ?? null;
 
     if (letter && letter !== this.hoveredLetter) {
       if (this.hoveredLetter) animateLetterHover(this.hoveredLetter, false);
@@ -428,6 +434,7 @@ export class TypoSceneController {
     this.controls.dispose();
     this.postProcessing?.dispose();
     disposeLetters(this.letters);
+    this.metalTextures.dispose();
     this.renderer.dispose();
   }
 }
