@@ -1,6 +1,7 @@
 <!--
   TypoScape — корневой layout.
-  GitHub UI иногда не отображает Vue SFC: логика в src/app/useAppShell.ts
+  GitHub UI иногда не отображает Vue SFC
+  Этот файл является тонкой оберткой. Вся логика вынесена в .ts модули.: логика в src/app/useAppShell.ts
   Raw: https://github.com/willalone/TypoScape/blob/main/src/app/useAppShell.ts
 -->
 <script lang="ts">

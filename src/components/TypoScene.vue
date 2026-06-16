@@ -1,6 +1,7 @@
 <!--
   TypoScape — WebGL canvas.
-  GitHub UI иногда не отображает Vue SFC: логика в src/components/useTypoScene.ts
+  GitHub UI иногда не отображает Vue SFC
+  Этот файл является тонкой оберткой. Вся логика вынесена в .ts модули.: логика в src/components/useTypoScene.ts
   Raw: https://github.com/willalone/TypoScape/blob/main/src/components/useTypoScene.ts
 -->
 <script lang="ts">
