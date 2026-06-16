@@ -5,6 +5,7 @@ import {
   FogExp2,
   GridHelper,
   Group,
+  PMREMGenerator,
   PerspectiveCamera,
   PointLight,
   Raycaster,
@@ -13,6 +14,7 @@ import {
   WebGLRenderer,
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import type { Font } from 'three/examples/jsm/loaders/FontLoader.js';
 import { COLORS, FONT_PATH, SCENE_CONFIG, getCameraDistance } from '../constants/config';
@@ -122,7 +124,12 @@ export class TypoSceneController {
     this.renderer.setSize(width, height, false);
     this.renderer.shadowMap.enabled = true;
     this.renderer.toneMapping = ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.22;
+    this.renderer.toneMappingExposure = 1.28;
+
+    const pmrem = new PMREMGenerator(this.renderer);
+    pmrem.compileEquirectangularShader();
+    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    pmrem.dispose();
 
     this.controls = new OrbitControls(this.camera, canvas);
     this.controls.enableDamping = true;
@@ -195,15 +202,19 @@ export class TypoSceneController {
   private setupLights(): void {
     this.scene.add(new AmbientLight(COLORS.ambient, 0.65));
 
-    const key = new DirectionalLight(COLORS.directional, 1.2);
+    const key = new DirectionalLight(COLORS.directional, 1.35);
     key.position.set(4, 10, 8);
     this.scene.add(key);
 
-    const fill = new DirectionalLight(0xfff4e0, 2.4);
+    const spec = new DirectionalLight(0xffffff, 1.1);
+    spec.position.set(-2, 6, 10);
+    this.scene.add(spec);
+
+    const fill = new DirectionalLight(0xfff4e0, 2.2);
     fill.position.set(0, 1.5, 12);
     this.scene.add(fill);
 
-    const rim = new DirectionalLight(COLORS.neonWarm, 0.6);
+    const rim = new DirectionalLight(COLORS.neonWarm, 0.85);
     rim.position.set(0, -2, -8);
     this.scene.add(rim);
 

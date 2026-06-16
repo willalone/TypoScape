@@ -1,10 +1,18 @@
-import type { Euler, Group, Mesh, MeshBasicMaterial, MeshStandardMaterial, Vector3 } from 'three';
+import type {
+  Euler,
+  Group,
+  Mesh,
+  MeshBasicMaterial,
+  MeshPhysicalMaterial,
+  Vector3,
+} from 'three';
 
 export interface LetterObject {
   group: Group;
   mesh: Mesh;
   haloMesh: Mesh;
   strokeMesh: Mesh;
+  sheenMesh: Mesh;
   char: string;
   basePosition: Vector3;
   baseRotation: Euler;
@@ -12,9 +20,10 @@ export interface LetterObject {
   isAnimating: boolean;
   isHovered: boolean;
   hoverTween: { kill: () => void } | null;
-  material: MeshStandardMaterial;
+  material: MeshPhysicalMaterial;
   haloMaterial: MeshBasicMaterial;
   strokeMaterial: MeshBasicMaterial;
+  sheenMaterial: MeshBasicMaterial;
   wavePhase: number;
   glassTint: number;
 }

@@ -1,10 +1,11 @@
 import {
   Box3,
+  AdditiveBlending,
   Color,
   Group,
   Mesh,
   MeshBasicMaterial,
-  MeshStandardMaterial,
+  MeshPhysicalMaterial,
 } from 'three';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 import type { Font } from 'three/examples/jsm/loaders/FontLoader.js';
@@ -14,21 +15,28 @@ import type { LetterObject } from './types';
 const GEO_OPTIONS = {
   size: SCENE_CONFIG.letterSize,
   depth: SCENE_CONFIG.letterDepth,
-  curveSegments: 5,
+  curveSegments: 6,
   bevelEnabled: true,
-  bevelThickness: 0.022,
-  bevelSize: 0.016,
-  bevelSegments: 2,
+  bevelThickness: 0.024,
+  bevelSize: 0.018,
+  bevelSegments: 3,
 } as const;
 
-function createLetterMaterial(tintHex: number): MeshStandardMaterial {
+function createLetterMaterial(tintHex: number): MeshPhysicalMaterial {
   const tint = new Color(tintHex);
-  return new MeshStandardMaterial({
+  return new MeshPhysicalMaterial({
     color: tint,
     emissive: tint,
     emissiveIntensity: SCENE_CONFIG.letterEmissiveIntensity,
-    metalness: 0.04,
-    roughness: 0.42,
+    metalness: 0.42,
+    roughness: 0.14,
+    clearcoat: 1,
+    clearcoatRoughness: 0.06,
+    reflectivity: 0.9,
+    envMapIntensity: SCENE_CONFIG.letterEnvIntensity,
+    sheen: 0.35,
+    sheenRoughness: 0.28,
+    sheenColor: new Color(0xfff8e8),
     fog: false,
   });
 }
@@ -37,9 +45,10 @@ function createHaloMaterial(): MeshBasicMaterial {
   return new MeshBasicMaterial({
     color: new Color(COLORS.letterHalo),
     transparent: true,
-    opacity: 0.62,
+    opacity: 0.55,
     depthWrite: false,
     fog: false,
+    blending: AdditiveBlending,
   });
 }
 
@@ -47,6 +56,17 @@ function createStrokeMaterial(): MeshBasicMaterial {
   return new MeshBasicMaterial({
     color: new Color(COLORS.letterStroke),
     fog: false,
+  });
+}
+
+function createSheenMaterial(): MeshBasicMaterial {
+  return new MeshBasicMaterial({
+    color: new Color(0xfffef8),
+    transparent: true,
+    opacity: 0.22,
+    depthWrite: false,
+    fog: false,
+    blending: AdditiveBlending,
   });
 }
 
@@ -85,6 +105,7 @@ export function createLetters(font: Font): {
     const material = createLetterMaterial(tint);
     const haloMaterial = createHaloMaterial();
     const strokeMaterial = createStrokeMaterial();
+    const sheenMaterial = createSheenMaterial();
 
     const letterGroup = new Group();
     const haloMesh = new Mesh(geometry, haloMaterial);
@@ -98,10 +119,14 @@ export function createLetters(font: Font): {
     const mesh = new Mesh(geometry, material);
     mesh.renderOrder = 2;
 
+    const sheenMesh = new Mesh(geometry, sheenMaterial);
+    sheenMesh.scale.setScalar(SCENE_CONFIG.letterSheenScale);
+    sheenMesh.renderOrder = 3;
+
     const x = cursorX + width / 2;
     letterGroup.position.set(x, 0, 0);
 
-    letterGroup.add(haloMesh, strokeMesh, mesh);
+    letterGroup.add(haloMesh, strokeMesh, mesh, sheenMesh);
 
     group.add(letterGroup);
     letters.push({
@@ -109,6 +134,7 @@ export function createLetters(font: Font): {
       mesh,
       haloMesh,
       strokeMesh,
+      sheenMesh,
       char,
       basePosition: letterGroup.position.clone(),
       baseRotation: letterGroup.rotation.clone(),
@@ -119,6 +145,7 @@ export function createLetters(font: Font): {
       material,
       haloMaterial,
       strokeMaterial,
+      sheenMaterial,
       wavePhase: index * 0.6,
       glassTint: tint,
     });
@@ -144,5 +171,6 @@ export function disposeLetters(letters: LetterObject[]): void {
     letter.material.dispose();
     letter.haloMaterial.dispose();
     letter.strokeMaterial.dispose();
+    letter.sheenMaterial.dispose();
   });
 }

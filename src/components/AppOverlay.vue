@@ -107,35 +107,76 @@ const store = useSceneStore();
 
 .overlay__btn {
   appearance: none;
+  position: relative;
   border: 1px solid rgba(255, 176, 80, 0.35);
   border-radius: 999px;
-  padding: 0.5rem 0.95rem;
-  background: rgba(2, 4, 8, 0.6);
-  backdrop-filter: blur(12px);
+  padding: 0.52rem 1rem;
+  background: rgba(2, 4, 8, 0.72);
+  backdrop-filter: blur(14px);
   color: #f2ece3;
   font-family: ui-monospace, monospace;
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   cursor: pointer;
+  box-shadow: 0 0 0 rgba(255, 176, 80, 0);
   transition:
-    border-color 0.25s ease,
-    background 0.25s ease,
-    transform 0.2s ease;
+    border-color 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.overlay__btn::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 176, 80, 0.35), rgba(255, 107, 42, 0.1));
+  opacity: 0;
+  transition: opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .overlay__btn:hover {
-  border-color: rgba(255, 107, 42, 0.7);
-  background: rgba(255, 107, 42, 0.12);
-  transform: translateY(-1px);
+  border-color: rgba(255, 176, 80, 0.65);
+  background: rgba(255, 176, 80, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 107, 42, 0.18);
+}
+
+.overlay__btn:hover::before {
+  opacity: 1;
+}
+
+.overlay__btn:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.12s;
 }
 
 .overlay__btn--ghost {
-  border-color: rgba(242, 236, 227, 0.15);
+  border-color: rgba(242, 236, 227, 0.18);
+  background: rgba(2, 4, 8, 0.55);
+}
+
+.overlay__btn--ghost:hover {
+  border-color: rgba(242, 236, 227, 0.35);
+  background: rgba(242, 236, 227, 0.06);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
 .overlay__btn--active {
-  border-color: rgba(255, 176, 80, 0.8);
-  color: #ffb050;
+  border-color: rgba(255, 176, 80, 0.9);
+  color: #ffd080;
+  background: rgba(255, 176, 80, 0.14);
+  box-shadow:
+    0 0 0 1px rgba(255, 176, 80, 0.25),
+    0 8px 28px rgba(255, 144, 64, 0.22);
+}
+
+.overlay__btn--active::before {
+  opacity: 1;
 }
 
 .overlay__btn kbd {
@@ -152,14 +193,16 @@ const store = useSceneStore();
   left: 50%;
   transform: translateX(-50%);
   margin: 0;
-  padding: 0.45rem 1.1rem;
+  padding: 0.5rem 1.25rem;
   border-radius: 999px;
-  background: rgba(2, 4, 8, 0.75);
-  border: 1px solid rgba(255, 107, 42, 0.45);
+  background: rgba(2, 4, 8, 0.82);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 107, 42, 0.5);
+  box-shadow: 0 12px 40px rgba(255, 107, 42, 0.15);
   font-family: ui-monospace, monospace;
   font-size: 1.4rem;
   letter-spacing: 0.35em;
-  color: #ff7a3a;
+  color: #ff9040;
   pointer-events: none;
 }
 
@@ -169,10 +212,14 @@ const store = useSceneStore();
   left: 50%;
   transform: translateX(-50%);
   margin: 0;
-  padding: 0.85rem 1.35rem;
-  border-radius: 0.75rem;
-  background: rgba(2, 4, 8, 0.82);
-  border: 1px solid rgba(255, 176, 80, 0.4);
+  padding: 1rem 1.5rem;
+  border-radius: 0.85rem;
+  background: rgba(2, 4, 8, 0.88);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 176, 80, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(255, 176, 80, 0.12),
+    0 20px 50px rgba(0, 0, 0, 0.45);
   text-align: center;
   pointer-events: none;
   min-width: 12rem;
@@ -205,8 +252,8 @@ const store = useSceneStore();
 .card-enter-active,
 .card-leave-active {
   transition:
-    opacity 0.3s ease,
-    transform 0.3s ease;
+    opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .hint-enter-from,
@@ -214,6 +261,6 @@ const store = useSceneStore();
 .card-enter-from,
 .card-leave-to {
   opacity: 0;
-  transform: translateX(-50%) translateY(8px);
+  transform: translateX(-50%) translateY(12px) scale(0.96);
 }
 </style>

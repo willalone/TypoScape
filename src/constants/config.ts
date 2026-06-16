@@ -11,13 +11,15 @@ export const SCENE_CONFIG = {
   cameraY: 0.1,
   autoRotateSpeed: 0.12,
   particleCount: 1200,
-  bloomStrength: 0.32,
-  bloomRadius: 0.35,
-  bloomThreshold: 0.82,
+  bloomStrength: 0.38,
+  bloomRadius: 0.42,
+  bloomThreshold: 0.78,
   introStagger: 0.2,
-  letterEmissiveIntensity: 0.76,
-  letterHaloScale: 1.085,
-  letterStrokeScale: 1.028,
+  letterEmissiveIntensity: 0.68,
+  letterEnvIntensity: 1.35,
+  letterHaloScale: 1.09,
+  letterStrokeScale: 1.03,
+  letterSheenScale: 0.994,
 } as const;
 
 export const COLORS = {

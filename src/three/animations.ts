@@ -8,6 +8,8 @@ import type { LetterObject } from './types';
 const hoverColor = new Color(COLORS.hoverAccent);
 const baseEmissive = new Color(COLORS.letterEmissive);
 const hoverEmissive = new Color(COLORS.hoverEmissive);
+const haloBaseOpacity = 0.55;
+const sheenBaseOpacity = 0.22;
 
 function stopHoverPulse(letter: LetterObject): void {
   letter.hoverTween?.kill();
@@ -27,7 +29,7 @@ export function animateLetterHover(letter: LetterObject, isHovered: boolean): vo
   letter.isHovered = isHovered;
   stopHoverPulse(letter);
 
-  const { material } = letter;
+  const { material, haloMaterial, sheenMaterial } = letter;
   const targetScale = isHovered
     ? letter.baseScale * SCENE_CONFIG.hoverScale
     : letter.baseScale;
@@ -39,9 +41,21 @@ export function animateLetterHover(letter: LetterObject, isHovered: boolean): vo
   });
 
   gsap.to(letter.group.position, {
-    z: letter.basePosition.z + (isHovered ? 0.18 : 0),
+    z: letter.basePosition.z + (isHovered ? 0.22 : 0),
     duration: 0.55,
     ease: 'power3.out',
+  });
+
+  gsap.to(haloMaterial, {
+    opacity: isHovered ? 0.82 : haloBaseOpacity,
+    duration: 0.5,
+    ease: 'power2.out',
+  });
+
+  gsap.to(sheenMaterial, {
+    opacity: isHovered ? 0.42 : sheenBaseOpacity,
+    duration: 0.5,
+    ease: 'power2.out',
   });
 
   const baseColor = new Color(letter.glassTint);
@@ -56,14 +70,16 @@ export function animateLetterHover(letter: LetterObject, isHovered: boolean): vo
       material.color.copy(fill);
       material.emissive.copy(emissive);
       material.emissiveIntensity =
-        SCENE_CONFIG.letterEmissiveIntensity + colorState.t * 0.45;
+        SCENE_CONFIG.letterEmissiveIntensity + colorState.t * 0.5;
+      material.envMapIntensity =
+        SCENE_CONFIG.letterEnvIntensity + colorState.t * 0.45;
     },
   });
 
   if (isHovered) {
     const pulse = { intensity: material.emissiveIntensity };
     letter.hoverTween = gsap.to(pulse, {
-      intensity: material.emissiveIntensity + 0.25,
+      intensity: material.emissiveIntensity + 0.28,
       duration: 0.85,
       yoyo: true,
       repeat: -1,
@@ -87,53 +103,70 @@ export function animateLetterClick(
   letter.isHovered = false;
   stopHoverPulse(letter);
 
+  const { material, haloMaterial, sheenMaterial, haloMesh, group } = letter;
+  const haloBaseScale = SCENE_CONFIG.letterHaloScale;
+
   if (flashLight) {
-    gsap.fromTo(
-      flashLight,
-      { intensity: 4 },
-      {
-        intensity: 22,
+    gsap.timeline()
+      .to(flashLight, {
+        intensity: 32,
+        duration: 0.08,
+        ease: 'power4.out',
+      })
+      .to(flashLight, {
+        intensity: 8,
+        duration: 0.35,
+        ease: 'power3.inOut',
+      })
+      .to(flashLight, {
+        intensity: 18,
         duration: 0.12,
-        yoyo: true,
-        repeat: 1,
         ease: 'power2.out',
-      },
-    );
+      })
+      .to(flashLight, {
+        intensity: 6,
+        duration: 0.5,
+        ease: 'power2.inOut',
+      });
   }
 
-  const { material, group } = letter;
   const timeline = gsap.timeline({
     onComplete: () => {
       letter.isAnimating = false;
       group.scale.setScalar(letter.baseScale);
       group.position.copy(letter.basePosition);
       group.rotation.copy(letter.baseRotation);
+      haloMesh.scale.setScalar(haloBaseScale);
       material.color.set(letter.glassTint);
       material.emissive.set(COLORS.letterEmissive);
       material.emissiveIntensity = SCENE_CONFIG.letterEmissiveIntensity;
+      material.envMapIntensity = SCENE_CONFIG.letterEnvIntensity;
+      material.metalness = 0.42;
+      haloMaterial.opacity = haloBaseOpacity;
+      sheenMaterial.opacity = sheenBaseOpacity;
     },
   });
 
   timeline
     .to(group.scale, {
-      x: letter.baseScale * 1.1,
-      y: letter.baseScale * 0.84,
-      z: letter.baseScale * 1.06,
-      duration: 0.14,
+      x: letter.baseScale * 1.12,
+      y: letter.baseScale * 0.82,
+      z: letter.baseScale * 1.08,
+      duration: 0.12,
       ease: 'power2.in',
     })
     .to(group.scale, {
-      x: letter.baseScale * 0.94,
-      y: letter.baseScale * 1.14,
-      z: letter.baseScale * 0.94,
+      x: letter.baseScale * 0.92,
+      y: letter.baseScale * 1.16,
+      z: letter.baseScale * 0.92,
       duration: 0.1,
       ease: 'power2.out',
     })
     .to(
       group.position,
       {
-        y: letter.basePosition.y + 3,
-        z: letter.basePosition.z + 0.5,
+        y: letter.basePosition.y + 3.2,
+        z: letter.basePosition.z + 0.65,
         duration: 0.55,
         ease: 'power4.out',
       },
@@ -142,8 +175,8 @@ export function animateLetterClick(
     .to(
       group.rotation,
       {
-        x: letter.baseRotation.x - 0.3,
-        z: letter.baseRotation.z + Math.PI * 0.5,
+        x: letter.baseRotation.x - 0.35,
+        z: letter.baseRotation.z + Math.PI * 0.55,
         duration: 0.55,
         ease: 'power3.out',
       },
@@ -152,17 +185,48 @@ export function animateLetterClick(
     .to(
       material,
       {
-        emissiveIntensity: 1.1,
-        duration: 0.25,
+        emissiveIntensity: 1.35,
+        metalness: 0.72,
+        envMapIntensity: 2.1,
+        duration: 0.22,
         ease: 'sine.inOut',
       },
-      '<25%',
+      '<20%',
+    )
+    .to(
+      haloMaterial,
+      {
+        opacity: 1,
+        duration: 0.18,
+        ease: 'power2.out',
+      },
+      '<',
+    )
+    .to(
+      sheenMaterial,
+      {
+        opacity: 0.75,
+        duration: 0.18,
+        ease: 'power2.out',
+      },
+      '<',
+    )
+    .to(
+      haloMesh.scale,
+      {
+        x: haloBaseScale * 1.22,
+        y: haloBaseScale * 1.22,
+        z: haloBaseScale * 1.22,
+        duration: 0.28,
+        ease: 'power2.out',
+      },
+      '<',
     )
     .to(group.position, {
       x: letter.basePosition.x,
       y: letter.basePosition.y,
       z: letter.basePosition.z,
-      duration: 0.65,
+      duration: 0.68,
       ease: 'power4.inOut',
     })
     .to(
@@ -171,7 +235,7 @@ export function animateLetterClick(
         x: letter.baseRotation.x,
         y: letter.baseRotation.y,
         z: letter.baseRotation.z,
-        duration: 0.65,
+        duration: 0.68,
         ease: 'power4.inOut',
       },
       '<',
@@ -180,23 +244,49 @@ export function animateLetterClick(
       x: letter.baseScale,
       y: letter.baseScale,
       z: letter.baseScale,
-      duration: 0.35,
-      ease: 'elastic.out(1, 0.55)',
+      duration: 0.4,
+      ease: 'elastic.out(1, 0.5)',
     })
     .to(
       material,
       {
-        emissiveIntensity: 0.85,
-        duration: 0.18,
+        emissiveIntensity: 0.95,
+        metalness: 0.42,
+        envMapIntensity: SCENE_CONFIG.letterEnvIntensity,
+        duration: 0.35,
+        ease: 'power2.out',
+      },
+      '<15%',
+    )
+    .to(
+      haloMesh.scale,
+      {
+        x: haloBaseScale,
+        y: haloBaseScale,
+        z: haloBaseScale,
+        duration: 0.45,
+        ease: 'elastic.out(1, 0.65)',
+      },
+      '<',
+    )
+    .to(
+      haloMaterial,
+      {
+        opacity: haloBaseOpacity,
+        duration: 0.45,
         ease: 'power2.out',
       },
       '<',
     )
-    .to(material, {
-      emissiveIntensity: SCENE_CONFIG.letterEmissiveIntensity,
-      duration: 0.55,
-      ease: 'power2.out',
-    });
+    .to(
+      sheenMaterial,
+      {
+        opacity: sheenBaseOpacity,
+        duration: 0.45,
+        ease: 'power2.out',
+      },
+      '<',
+    );
 }
 
 export function animateLettersIntro(
